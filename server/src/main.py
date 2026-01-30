@@ -21,14 +21,26 @@ Base = declarative_base()
 
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
+print("--------------------------------------------------")
+print("🔍 사용 가능한 모델 목록 조회 중...")
+try:
+    for m in genai.list_models():
+        if 'generateContent' in m.supported_generation_methods:
+            print(f"   👉 {m.name}")
+except Exception as e:
+    print(f"   ⚠️ 모델 조회 실패: {e}")
+print("--------------------------------------------------")
+
 # 💡 안전 설정 추가: "위험한 말이라도 차단하지 마라" (스미싱 분석용 필수)
 safety_settings = {
     HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
     HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
     HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
     HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
-}
-model = genai.GenerativeModel('gemini-1.5-pro', safety_settings=safety_settings)
+    }
+
+
+model = genai.GenerativeModel('gemini-pro', safety_settings=safety_settings)
 
 app = FastAPI()
 
