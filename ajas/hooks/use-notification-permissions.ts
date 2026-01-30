@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { BackHandler } from "react-native";
 import NotificationsModule from "@/modules/notifications/src/NotificationsModule";
 import { TARGET_PACKAGE_NAMES } from "@/constants/targetPackage";
 import { showLocalNotification } from "./use-expo-notifications";
@@ -35,7 +36,8 @@ export function useNotificationPermissions() {
             "[useNotificationPermissions] Permission denied - app will exit",
           );
           // 권한이 없으면 앱 종료
-          process.exit(1);
+          BackHandler.exitApp();
+          return;
         }
 
         setHasPermission(true);
@@ -115,7 +117,7 @@ export function useNotificationPermissions() {
         };
       } catch (error) {
         console.error("[useNotificationPermissions] Error:", error);
-        process.exit(1);
+        BackHandler.exitApp();
       }
     })();
   }, []);
