@@ -5,27 +5,28 @@ import os
 dataset = load_dataset("meal-bbang/Korean_message", split="train")
 
 # print(dataset[0])
+
 def _cfg(db=None):
     return {
-        "host": os.getenv("DB_HOST", "localhost"),
+        "host": os.getenv("DB_HOST", "127.0.0.1"),
         "port": int(os.getenv("DB_PORT", "3306")),
-        "user": os.getenv("DB_USER", "ajas"),
-        "password": os.getenv("DB_PASSWORD", "ajas1234"),
+        "user": os.getenv("DB_USER", "root"),
+        "password": os.getenv("DB_PASSWORD", "rootpassword"),
         "database": db,
         "charset": "utf8mb4",
         "cursorclass": pymysql.cursors.DictCursor,
         "autocommit": False,
     }
-conn = pymysql.connect(**_cfg(db="mydb"))
+conn = pymysql.connect(**_cfg(db="smishing_db"))
 cur = conn.cursor()
 
 # mydb가 존재하지 않으면 생성
-cur.execute("CREATE DATABASE IF NOT EXISTS mydb CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;")
+cur.execute("CREATE DATABASE IF NOT EXISTS smishing_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;")
 conn.commit()
 cur.close()
 conn.close()
 
-conn = pymysql.connect(**_cfg(db="mydb"))
+conn = pymysql.connect(**_cfg(db="smishing_db"))
 cur = conn.cursor()
 cur.execute("""
 CREATE TABLE IF NOT EXISTS sms_dataset (

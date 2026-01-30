@@ -4,4 +4,12 @@ venv
 __pycache__
 __pycache__/*
 */__pycache__
+<<<<<<< HEAD
 myvenv
+=======
+<<<<<<< HEAD
+myvenv
+=======
+myvenv
+>>>>>>> 9c4d90c (krdb edit)
+>>>>>>> HEAD@{1}
