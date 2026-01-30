@@ -7,17 +7,28 @@ import { MD3LightTheme, MD3DarkTheme, PaperProvider } from "react-native-paper";
 import { SplashScreen, Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import "react-native-reanimated";
-import { View } from "react-native";
+import { useEffect } from "react";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useNotificationPermissions } from "@/hooks/use-notification-permissions";
+import { useExpoNotificationPermissions } from "@/hooks/use-expo-notifications";
 
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
-  const { isReady } = useNotificationPermissions();
+  const { isReady: notificationReady } = useNotificationPermissions();
+  const { isReady: expoNotificationReady } = useExpoNotificationPermissions();
 
-  if (!isReady) {
+  const allReady = notificationReady && expoNotificationReady;
+
+  useEffect(() => {
+    if (allReady) {
+      console.log("[RootLayout] All permissions ready, hiding splash screen");
+      SplashScreen.hideAsync();
+    }
+  }, [allReady]);
+
+  if (!allReady) {
     return null;
   }
 
