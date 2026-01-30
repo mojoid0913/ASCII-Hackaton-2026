@@ -12,3 +12,4 @@ pandas
 langchain-chroma
 langchain-google-genai
 sentence-transformers
+langchain_huggingface

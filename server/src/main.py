@@ -44,7 +44,7 @@ safety_settings = {
 }
 
 # 모델 설정 (사용자가 지정한 gemini-3 유지)
-model = genai.GenerativeModel('gemini-3-flash-preview', temperature=0.1, safety_settings=safety_settings)
+model = genai.GenerativeModel('gemini-3-flash-preview', safety_settings=safety_settings)
 
 app = FastAPI()
 
