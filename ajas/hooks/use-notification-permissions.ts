@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import * as SplashScreen from "expo-splash-screen";
 import NotificationsModule from "@/modules/notifications/src/NotificationsModule";
+import analyzeMessage from "@/api/analyzeMessage";
 
 export function useNotificationPermissions() {
   const [isReady, setIsReady] = useState(false);
@@ -47,10 +48,16 @@ export function useNotificationPermissions() {
         const subscription = NotificationsModule.addListener(
           "onNotificationPosted",
           (notification) => {
-            console.log("[useNotificationPermissions] Notification received:");
-            console.log("  - Package:", notification.packageName);
-            console.log("  - Title:", notification.title);
-            console.log("  - Text:", notification.text);
+            analyzeMessage({
+              sender: notification.title,
+              content: notification.text,
+            })
+              .then((response) => {
+                console.log("[Notification Analysis] Response:", response);
+              })
+              .catch((error) => {
+                console.error("[Notification Analysis] Error:", error);
+              });
           },
         );
 
