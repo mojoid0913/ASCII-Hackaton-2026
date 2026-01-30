@@ -11,6 +11,7 @@ import google.generativeai as genai
 import os
 import datetime
 import json
+from google.generativeai.types import HarmCategory, HarmBlockThreshold
 
 # --- 설정 ---
 DB_URL = os.getenv("DB_URL")
