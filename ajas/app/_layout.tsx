@@ -8,10 +8,11 @@ import { SplashScreen, Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import "react-native-reanimated";
 import { useEffect, useState } from "react";
+import { BackHandler } from "react-native";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import { useNotificationPermissions } from "@/hooks/use-notification-permissions";
-import { useExpoNotificationPermissions } from "@/hooks/use-expo-notifications";
+import { initExpoNotifications } from "@/hooks/use-expo-notifications";
+import { initNotificationListener } from "@/hooks/use-notification-permissions";
 import { initializeAnalyzeHistoryStorage } from "@/util/analyzeHistoryStorage";
 import AjasNavigationBar from "@/components/AjasNavigationBar";
 
@@ -28,40 +29,33 @@ const queryClient = new QueryClient({
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
-  const { isReady: notificationReady } = useNotificationPermissions();
-  const { isReady: expoNotificationReady } = useExpoNotificationPermissions();
-  const [historyReady, setHistoryReady] = useState(false);
-
-  const allReady = notificationReady && expoNotificationReady && historyReady;
+  const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    let isMounted = true;
-
     (async () => {
+      if (isReady) return;
       try {
+        console.log("[RootLayout] Starting initialization...");
+
+        await initExpoNotifications();
+        console.log("[RootLayout] Expo notifications initialized");
+
+        await initNotificationListener();
+        console.log("[RootLayout] Notification listener initialized");
+
         await initializeAnalyzeHistoryStorage();
+        console.log("[RootLayout] Analyze history storage initialized");
+
+        setIsReady(true);
+        SplashScreen.hideAsync();
       } catch (error) {
-        console.error("[RootLayout] History init failed:", error);
-      } finally {
-        if (isMounted) {
-          setHistoryReady(true);
-        }
+        console.error("[RootLayout] Initialization failed:", error);
+        BackHandler.exitApp();
       }
     })();
-
-    return () => {
-      isMounted = false;
-    };
   }, []);
 
-  useEffect(() => {
-    if (allReady) {
-      console.log("[RootLayout] All permissions ready, hiding splash screen");
-      SplashScreen.hideAsync();
-    }
-  }, [allReady]);
-
-  if (!allReady) {
+  if (!isReady) {
     return null;
   }
 

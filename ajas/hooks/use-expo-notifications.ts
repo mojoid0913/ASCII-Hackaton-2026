@@ -1,6 +1,5 @@
-import { useEffect, useState } from "react";
 import * as Notifications from "expo-notifications";
-import { BackHandler, Platform } from "react-native";
+import { Platform } from "react-native";
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -11,65 +10,43 @@ Notifications.setNotificationHandler({
   }),
 });
 
-export function useExpoNotificationPermissions() {
-  const [isReady, setIsReady] = useState(false);
-  const [hasPermission, setHasPermission] = useState(false);
+/**
+ * Expo 알림 권한 초기화
+ * @throws 권한이 거부된 경우 에러 발생
+ */
+export async function initExpoNotifications(): Promise<void> {
+  console.log("[initExpoNotifications] Checking permission...");
 
-  useEffect(() => {
-    (async () => {
-      try {
-        console.log("[useExpoNotificationPermissions] Checking permission...");
+  if (Platform.OS === "web") {
+    console.log("[initExpoNotifications] Web platform - skipping");
+    return;
+  }
 
-        if (Platform.OS === "web") {
-          setHasPermission(true);
-          setIsReady(true);
-          return;
-        }
+  // Android 채널 설정
+  if (Platform.OS === "android") {
+    await Notifications.setNotificationChannelAsync("default", {
+      name: "default",
+      importance: Notifications.AndroidImportance.MAX,
+      vibrationPattern: [0, 250, 250, 250],
+      lightColor: "#FF231F7C",
+    });
+  }
 
-        // Android 채널 설정
-        if (Platform.OS === "android") {
-          await Notifications.setNotificationChannelAsync("default", {
-            name: "default",
-            importance: Notifications.AndroidImportance.MAX,
-            vibrationPattern: [0, 250, 250, 250],
-            lightColor: "#FF231F7C",
-          });
-        }
+  // 권한 확인
+  const { status: existingStatus } = await Notifications.getPermissionsAsync();
+  let finalStatus = existingStatus;
 
-        // 권한 확인
-        const { status: existingStatus } =
-          await Notifications.getPermissionsAsync();
-        let finalStatus = existingStatus;
+  if (existingStatus !== "granted") {
+    console.log("[initExpoNotifications] Requesting permission...");
+    const { status } = await Notifications.requestPermissionsAsync();
+    finalStatus = status;
+  }
 
-        if (existingStatus !== "granted") {
-          console.log(
-            "[useExpoNotificationPermissions] Requesting permission...",
-          );
-          const { status } = await Notifications.requestPermissionsAsync();
-          finalStatus = status;
-        }
+  if (finalStatus !== "granted") {
+    throw new Error("Expo notification permission denied");
+  }
 
-        if (finalStatus !== "granted") {
-          console.error(
-            "[useExpoNotificationPermissions] Permission denied - app will exit",
-          );
-          // 권한이 없으면 앱 종료
-          BackHandler.exitApp();
-          return;
-        }
-
-        setHasPermission(true);
-        console.log("[useExpoNotificationPermissions] Permission granted");
-
-        setIsReady(true);
-      } catch (error) {
-        console.error("[useExpoNotificationPermissions] Error:", error);
-        BackHandler.exitApp();
-      }
-    })();
-  }, []);
-
-  return { isReady, hasPermission };
+  console.log("[initExpoNotifications] Permission granted");
 }
 
 export async function showLocalNotification(
