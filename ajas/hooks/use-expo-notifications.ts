@@ -20,6 +20,12 @@ export function useExpoNotificationPermissions() {
       try {
         console.log("[useExpoNotificationPermissions] Checking permission...");
 
+        if (Platform.OS === "web") {
+          setHasPermission(true);
+          setIsReady(true);
+          return;
+        }
+
         // Android 채널 설정
         if (Platform.OS === "android") {
           await Notifications.setNotificationChannelAsync("default", {
@@ -70,6 +76,11 @@ export async function showLocalNotification(
   body: string,
   data?: Record<string, unknown>,
 ): Promise<string> {
+  if (Platform.OS === "web") {
+    alert(`${title}\n${body}`);
+    return "mock-notification";
+  }
+
   return await Notifications.scheduleNotificationAsync({
     content: {
       title,
