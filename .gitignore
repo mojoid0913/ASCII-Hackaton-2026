@@ -7,3 +7,4 @@ __pycache__/*
 myvenv
 server/chroma_db
 */chroma_db/*
+*/=1.11.0
