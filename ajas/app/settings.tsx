@@ -2,8 +2,8 @@ import { useState } from "react";
 import { StyleSheet, View, ScrollView, TouchableOpacity } from "react-native";
 import { Button, Checkbox } from "react-native-paper";
 import { router } from "expo-router";
-import RcSlider from "rc-slider";
-import "rc-slider/assets/index.css";
+import Slider from "@react-native-community/slider";
+import * as Contacts from "expo-contacts";
 
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
@@ -25,12 +25,7 @@ export default function OnboardingScreen() {
   const [fontSize, setFontSize] = useState(18);
   
   // Step 2: 보호자 설정
-  const [contacts, setContacts] = useState<Contact[]>([
-    { id: "1", name: "엄마", phoneNumber: "010-1234-5678" },
-    { id: "2", name: "아빠", phoneNumber: "010-8765-4321" },
-    { id: "3", name: "딸", phoneNumber: "010-1111-2222" },
-    { id: "4", name: "아들", phoneNumber: "010-3333-4444" },
-  ]);
+  const [contacts, setContacts] = useState<Contact[]>([]);
   const [selectedGuardians, setSelectedGuardians] = useState<string[]>([]);
   const [contactsLoaded, setContactsLoaded] = useState(false);
   
@@ -59,9 +54,27 @@ export default function OnboardingScreen() {
   };
 
   const requestContactPermission = async () => {
-    // TODO: 실제 연락처 권한 요청 및 가져오기
-    alert("연락처를 불러왔습니다");
-    setContactsLoaded(true);
+    const { status } = await Contacts.requestPermissionsAsync();
+    if (status === "granted") {
+      const { data } = await Contacts.getContactsAsync({
+        fields: [Contacts.Fields.PhoneNumbers, Contacts.Fields.Name],
+      });
+
+      // 전화번호가 있는 연락처만 필터링하여 변환
+      const loadedContacts: Contact[] = data
+        .filter((contact) => contact.phoneNumbers && contact.phoneNumbers.length > 0)
+        .map((contact) => ({
+          id: contact.id ?? String(Math.random()),
+          name: contact.name ?? "이름 없음",
+          phoneNumber: contact.phoneNumbers?.[0]?.number ?? "",
+        }));
+
+      setContacts(loadedContacts);
+      setContactsLoaded(true);
+    } else {
+      // 권한 거부 시에도 상태 업데이트
+      console.log("연락처 권한이 거부되었습니다");
+    }
   };
 
   const renderStepContent = () => {
@@ -90,21 +103,16 @@ export default function OnboardingScreen() {
             <View style={styles.sliderContainer}>
               <ThemedText style={styles.sliderLabel}>작게</ThemedText>
               <View style={styles.sliderWrapper}>
-                <RcSlider
-                  min={14}
-                  max={34}
+                <Slider
+                  minimumValue={14}
+                  maximumValue={34}
                   step={0.5}
                   value={fontSize}
-                  onChange={(value) => setFontSize(value as number)}
-                  trackStyle={{ backgroundColor: "#6200ee", height: 4 }}
-                  railStyle={{ backgroundColor: "#ccc", height: 4 }}
-                  handleStyle={{
-                    backgroundColor: "#6200ee",
-                    border: "none",
-                    width: 20,
-                    height: 20,
-                    marginTop: -8,
-                  }}
+                  onValueChange={setFontSize}
+                  minimumTrackTintColor="#6200ee"
+                  maximumTrackTintColor="#ccc"
+                  thumbTintColor="#6200ee"
+                  style={{ flex: 1 }}
                 />
               </View>
               <ThemedText style={styles.sliderLabel}>크게</ThemedText>
@@ -148,6 +156,8 @@ export default function OnboardingScreen() {
                             : "unchecked"
                         }
                         onPress={() => toggleGuardian(contact.id)}
+                        color="#6200ee"
+                        uncheckedColor="#666"
                       />
                       <View style={styles.contactInfo}>
                         <ThemedText style={styles.contactName}>
@@ -253,12 +263,19 @@ export default function OnboardingScreen() {
       {/* 페이지 인디케이터 */}
       <View style={styles.indicatorContainer}>
         {Array.from({ length: TOTAL_STEPS }).map((_, index) => (
-          <View
+          <TouchableOpacity
             key={index}
             style={[
               styles.indicator,
               index === currentStep && styles.indicatorActive,
             ]}
+            onPress={() => {
+              // 현재 단계보다 뒤의 단계로는 이동 불가
+              if (index <= currentStep) {
+                setCurrentStep(index);
+              }
+            }}
+            disabled={index > currentStep}
           />
         ))}
       </View>
