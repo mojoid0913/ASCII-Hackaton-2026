@@ -43,7 +43,7 @@ export default function HomeScreen() {
 
   if (!latestAlert) {
     return (
-      <ThemedView style={styles.container}>
+      <ThemedView style={[styles.centerContent, { flex: 1, marginTop: -fontSize * 4 }]}>
         <View style={styles.centerContent}>
           <Image
             source={require("@/assets/images/icon.png")}
