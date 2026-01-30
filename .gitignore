@@ -8,3 +8,5 @@ myvenv
 server/chroma_db
 */chroma_db/*
 */=1.11.0
+
+ajas/expo-env.d.ts
