@@ -26,7 +26,7 @@ safety_settings = {
 }
 
 # 모델 설정
-model = genai.GenerativeModel('gemini-1.5-flash', safety_settings=safety_settings)
+model = genai.GenerativeModel('gemini-3-flash-preview', safety_settings=safety_settings)
 
 app = FastAPI()
 
