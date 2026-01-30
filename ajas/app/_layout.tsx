@@ -17,7 +17,9 @@ import { initializeAnalyzeHistoryStorage } from "@/util/analyzeHistoryStorage";
 import AjasNavigationBar from "@/components/AjasNavigationBar";
 import { queryClient } from "@/global/queryClient";
 
-SplashScreen.preventAutoHideAsync();
+SplashScreen.preventAutoHideAsync().catch((e) => {
+  console.warn(e);
+});
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
