@@ -1,6 +1,6 @@
 import { StyleSheet, Image, View, ScrollView } from "react-native";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import * as SMS from 'expo-sms';
+import * as SMS from "expo-sms";
 import { getSettings } from "@/util/Storage";
 import { useMemo, useCallback, useState } from "react";
 import { Surface, FAB } from "react-native-paper";
@@ -20,10 +20,10 @@ export default function HomeScreen() {
   const [fontSize, setFontSize] = useState(20);
   useFocusEffect(
     useCallback(() => {
-      getSettings().then(s => {
+      getSettings().then((s) => {
         if (s?.fontSize) setFontSize(s.fontSize);
       });
-    }, [])
+    }, []),
   );
   const queryClient = useQueryClient();
   const { data, isLoading, isError } = useQuery({
@@ -43,7 +43,9 @@ export default function HomeScreen() {
 
   if (!latestAlert) {
     return (
-      <ThemedView style={[styles.centerContent, { flex: 1, marginTop: -fontSize * 4 }]}>
+      <ThemedView
+        style={[styles.centerContent, { flex: 1, marginTop: -fontSize * 4 }]}
+      >
         <View style={styles.centerContent}>
           <Image
             source={require("@/assets/images/icon.png")}
@@ -52,10 +54,28 @@ export default function HomeScreen() {
             style={styles.icon}
             resizeMode="contain"
           />
-          <ThemedText style={[styles.mainText, { fontSize: fontSize * 1.2, lineHeight: fontSize * 1.8, textAlign: "center" }]}>
+          <ThemedText
+            style={[
+              styles.mainText,
+              {
+                fontSize: fontSize * 1.2,
+                lineHeight: fontSize * 1.8,
+                textAlign: "center",
+              },
+            ]}
+          >
             지금 보호 중입니다
           </ThemedText>
-          <ThemedText style={[styles.subText, { fontSize: fontSize * 0.9, lineHeight: fontSize, textAlign: "center" }]}>
+          <ThemedText
+            style={[
+              styles.subText,
+              {
+                fontSize: fontSize * 0.9,
+                lineHeight: fontSize,
+                textAlign: "center",
+              },
+            ]}
+          >
             문자 메세지를 실시간으로 감시하고 있어요
           </ThemedText>
         </View>
@@ -108,7 +128,7 @@ export default function HomeScreen() {
   const handleRequestChildConfirmation = async () => {
     try {
       const settings = await getSettings();
-      const phoneNumbers = settings?.guardians?.map(g => g.phoneNumber) || [];
+      const phoneNumbers = settings?.guardians?.map((g) => g.phoneNumber) || [];
       if (phoneNumbers.length === 0) {
         alert("등록된 보호자가 없습니다. 설정에서 보호자를 먼저 등록해주세요.");
         return;
@@ -119,6 +139,8 @@ export default function HomeScreen() {
         const message = `[안심알림] 보호자분, 확인 부탁드립니다.\n방금 모르는 번호(${latestAlert.sender})로부터 의심스러운 문자가 와서 앱이 탐지했습니다.\n\n내용: ${latestAlert.content}\n분석: ${latestAlert.reason}`;
 
         await SMS.sendSMSAsync(phoneNumbers, message);
+        dismissAnalyzeHistory(latestAlert.id);
+        queryClient.invalidateQueries({ queryKey: ["analyzeHistory"] });
       } else {
         alert("이 기기에서는 문자 메시지 기능을 사용할 수 없습니다.");
       }
@@ -127,46 +149,85 @@ export default function HomeScreen() {
       alert("보호자 정보를 불러오거나 문자를 보내는 데 실패했습니다.");
     }
   };
-  
+
   return (
     <ThemedView style={styles.container}>
       <ScrollView
         style={styles.scrollView}
         // 1. 하단 여백: 버튼에 가려지지 않게 끝까지 스크롤 허용
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: fontSize * 5 }]}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingBottom: fontSize * 5 },
+        ]}
       >
         <View style={styles.alertHeader}>
-          <Ionicons name={alertInfo.icon} size={fontSize * 3} color={alertInfo.color} />
+          <Ionicons
+            name={alertInfo.icon}
+            size={fontSize * 3}
+            color={alertInfo.color}
+          />
           <ThemedText
             type="title"
             // 2. 제목: lineHeight를 fontSize의 약 1.3배 이상 주어 겹침 방지
-            style={[styles.alertText, { color: alertInfo.color, fontSize: fontSize * 1.5, lineHeight: fontSize * 2 }]}
+            style={[
+              styles.alertText,
+              {
+                color: alertInfo.color,
+                fontSize: fontSize * 1.5,
+                lineHeight: fontSize * 2,
+              },
+            ]}
           >
             {alertInfo.text}
           </ThemedText>
         </View>
 
         {/* 3. Surface: height: 'auto'를 넣어 글자 크기에 따라 상자가 늘어나게 함 */}
-        <Surface style={[styles.surface, { height: 'auto' }]} elevation={2}>
-          <ThemedText type="subtitle" style={[styles.sectionTitle, { fontSize: fontSize, lineHeight: fontSize * 1.4 }]}>
+        <Surface style={[styles.surface, { height: "auto" }]} elevation={2}>
+          <ThemedText
+            type="subtitle"
+            style={[
+              styles.sectionTitle,
+              { fontSize: fontSize, lineHeight: fontSize * 1.4 },
+            ]}
+          >
             수신된 {appName} 내용
           </ThemedText>
           <View style={styles.messageInfo}>
-            <ThemedText type="defaultSemiBold" style={[styles.sender, { fontSize: fontSize * 0.8 }]}>
+            <ThemedText
+              type="defaultSemiBold"
+              style={[styles.sender, { fontSize: fontSize * 0.8 }]}
+            >
               {latestAlert.sender}
             </ThemedText>
             {/* 본문 줄간격 확보 */}
-            <ThemedText style={[styles.content, { fontSize: fontSize * 0.9, lineHeight: fontSize * 1.5 }]}>
+            <ThemedText
+              style={[
+                styles.content,
+                { fontSize: fontSize * 0.9, lineHeight: fontSize * 1.5 },
+              ]}
+            >
               {truncatedContent}
             </ThemedText>
           </View>
         </Surface>
 
-        <Surface style={[styles.surface, { height: 'auto' }]} elevation={2}>
-          <ThemedText type="subtitle" style={[styles.sectionTitle, { fontSize: fontSize, lineHeight: fontSize * 1.4 }]}>
+        <Surface style={[styles.surface, { height: "auto" }]} elevation={2}>
+          <ThemedText
+            type="subtitle"
+            style={[
+              styles.sectionTitle,
+              { fontSize: fontSize, lineHeight: fontSize * 1.4 },
+            ]}
+          >
             분석 결과
           </ThemedText>
-          <ThemedText style={[styles.reason, { fontSize: fontSize * 0.9, lineHeight: fontSize * 1.5 }]}>
+          <ThemedText
+            style={[
+              styles.reason,
+              { fontSize: fontSize * 0.9, lineHeight: fontSize * 1.5 },
+            ]}
+          >
             {latestAlert.reason}
           </ThemedText>
         </Surface>
