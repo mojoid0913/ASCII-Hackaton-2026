@@ -8,7 +8,7 @@ from google.generativeai.types import HarmCategory, HarmBlockThreshold
 import os
 import datetime
 import json
-# from crawler import inspect_url # 필요시 주석 해제
+from src.crawler import inspect_url # 필요시 주석 해제
 import re
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_chroma import Chroma # 👈 (추가) 이거 없으면 Chroma 에러남
@@ -76,9 +76,28 @@ class SmsRequest(BaseModel):
 def run_selenium_check(url_or_phone: str):
     pass 
 
+
 @app.post("/analyze")
 async def analyze(req: SmsRequest):
     print(f"📡 Gemini 요청: {req.content[:20]}...") 
+
+
+    # 1. 정규표현식으로 전화번호 여부 확인 (010-1234-5678 또는 02-123-4567 등)
+    # 숫자와 하이픈만 포함된 전형적인 번호 패턴
+    phone_pattern = r"^\d{2,3}-\d{3,4}-\d{4}$|^\d{9,11}$"
+
+    is_phone_number = re.match(phone_pattern, req.sender.replace(" ", ""))
+
+    # 2. 발신자가 번호일 경우에만 크롤러(Selenium) 실행
+    crawler_result = ""
+    if is_phone_number:
+        print(f"🔍 발신자가 번호({req.sender})이므로 크롤링을 시도합니다.")
+        # 이전에 정의하신 selenium_check 함수 호출 (결과를 문자열로 받는다고 가정)
+        # 예: crawler_result = run_selenium_check
+        crawler_result=inspect_url(req.sender.replace("-","").replace(" ",""))
+        print("crawling result:"+str(crawler_result))
+    else:
+        print(f"ℹ️ 발신자가 이름({req.sender})이므로 크롤링을 건너뜁니다.")
 
     # [수정됨] 1. RAG 검색 수행 (여기서 DB 뒤져서 비슷한거 가져옴)
     context_text = "유사 사례 없음"
@@ -117,7 +136,7 @@ async def analyze(req: SmsRequest):
     answer_str = "분석 중 오류 발생"
 
     try:
-        response = model.generate_content(prompt)
+        #response = model.generate_content(prompt)
         text_data = response.text.strip()
         print(f"🤖 Gemini 응답: {text_data}") 
         

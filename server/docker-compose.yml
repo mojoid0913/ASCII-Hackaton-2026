@@ -37,7 +37,7 @@ services:
       - db
     environment:
       DB_URL: mysql+pymysql://user:password@db:3306/smishing_db
-      GEMINI_API_KEY: "AIzaSyDXAqnb6826hQNaYYOKdp6NScOjPV1BD2Q"
+      GEMINI_API_KEY: "AIzaSyAyIWot14k8c4r9zbTleW78Pgxzf8hFxNM"
       # 만약 키를 파일에 적기 싫으면 위 줄 지우고 실행할 때 환경변수로 넘기면 됩니다.
 
 volumes:

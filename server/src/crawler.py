@@ -3,7 +3,7 @@ import os
 import time
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common import By
+from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 
 def inspect_url(phone_number):
@@ -43,9 +43,6 @@ def inspect_url(phone_number):
         time.sleep(3)
 
         # 4. 정보 수집
-        result["status"] = "success"
-        result["title"] = driver.title
-        result["final_url"] = driver.current_url
 
         element=driver.find_element(By.ID, "tel_num")
         element.clear()
@@ -68,7 +65,6 @@ def inspect_url(phone_number):
 
     except Exception as e:
         print(f"❌ 크롤링 에러: {e}")
-        result["error"] = str(e)
 
     finally:
         # 브라우저 종료 (필수)
