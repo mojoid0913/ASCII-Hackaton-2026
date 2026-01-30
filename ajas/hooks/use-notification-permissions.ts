@@ -92,7 +92,7 @@ export function useNotificationPermissions() {
                   );
                 });
 
-                if (alertLevel === AlertLevel.SAFE) {
+                if (alertLevel !== AlertLevel.SAFE) {
                   showLocalNotification("⚠️의심 문자입니다", "");
                 }
               })
