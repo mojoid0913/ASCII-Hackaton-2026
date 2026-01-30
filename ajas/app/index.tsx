@@ -14,13 +14,19 @@ import {
 import { dismissAnalyzeHistory } from "@/util/dismissAnalyzeHistory";
 import { AlertLevel } from "@/util/alertLevel";
 import { TARGET_PACKAGE_NAMES_HUMAN_READABLE } from "@/constants/targetPackage";
-import { useFocusEffect } from "expo-router"; // 📍 추가
+import { useFocusEffect, useRouter } from "expo-router";
 
 export default function HomeScreen() {
+  const router = useRouter();
   const [fontSize, setFontSize] = useState(20);
+
   useFocusEffect(
     useCallback(() => {
       getSettings().then((s) => {
+        if (!s?.onboardingCompleted) {
+          return router.replace("/settings");
+        }
+
         if (s?.fontSize) setFontSize(s.fontSize);
       });
     }, []),
