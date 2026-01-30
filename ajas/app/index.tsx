@@ -82,7 +82,7 @@ export default function HomeScreen() {
               },
             ]}
           >
-            문자 메세지를 실시간으로 감시하고 있어요
+            스미싱을 실시간으로 예방하고 있어요
           </ThemedText>
         </View>
       </ThemedView>
