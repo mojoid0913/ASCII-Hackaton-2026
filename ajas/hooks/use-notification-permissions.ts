@@ -35,7 +35,7 @@ export function useNotificationPermissions() {
             "[useNotificationPermissions] Permission denied - app will exit",
           );
           // 권한이 없으면 앱 종료
-          process.exit(1);
+          alert("알란 권한 설정이 필요합니다.")
         }
 
         setHasPermission(true);

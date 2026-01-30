@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { StyleSheet, ScrollView, TouchableOpacity } from "react-native";
 import { Button, Checkbox } from "react-native-paper";
 import { router } from "expo-router";
@@ -8,6 +8,7 @@ import * as Contacts from "expo-contacts";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { PRIVACY_DESCRIPTIONS } from "@/constants/policies";
+import { saveSettings, Guardian } from "@/util/Storage";
 
 
 const TOTAL_STEPS = 3;
@@ -33,17 +34,28 @@ export default function OnboardingScreen() {
   const [privacyAgreed, setPrivacyAgreed] = useState(false);
   const [privacyExpanded, setPrivacyExpanded] = useState(false);
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (currentStep < TOTAL_STEPS - 1) {
       setCurrentStep(currentStep + 1);
     } else {
-      // 완료 시 데이터 저장
-      console.log("Selected Font Size:", fontSize);
-      console.log("Selected Guardians:", selectedGuardians);
-      console.log("Privacy Agreed:", privacyAgreed);
-      
-      // TODO: AsyncStorage에 저장
-      router.back();
+      // 선택된 보호자 정보 추출
+      const guardians: Guardian[] = contacts
+        .filter((c) => selectedGuardians.includes(c.id))
+        .map((c) => ({
+          id: c.id,
+          name: c.name,
+          phoneNumber: c.phoneNumber,
+        }));
+
+      // 설정 저장
+      await saveSettings({
+        fontSize,
+        guardians,
+        privacyAgreed,
+        onboardingCompleted: true,
+      });
+
+      router.navigate("/");
     }
   };
 
@@ -72,8 +84,7 @@ export default function OnboardingScreen() {
       setContacts(loadedContacts);
       setContactsLoaded(true);
     } else {
-      // 권한 거부 시에도 상태 업데이트
-      console.log("연락처 권한이 거부되었습니다");
+      alert("연락처 접근 권한이 필요합니다.\n설정에서 연락처 접근을 허용해주세요.");
     }
   };
 
@@ -94,9 +105,6 @@ export default function OnboardingScreen() {
               <ThemedText style={[styles.fontPreview, { fontSize }]}>
                 가나다라
               </ThemedText>
-              {/* <ThemedText style={styles.fontSizeLabel}>
-                {fontSize}pt
-              </ThemedText> */}
             </ThemedView>
 
             {/* 슬라이더 */}
@@ -109,9 +117,9 @@ export default function OnboardingScreen() {
                   step={0.5}
                   value={fontSize}
                   onValueChange={setFontSize}
-                  minimumTrackTintColor="#6200ee"
+                  minimumTrackTintColor="#32a151"
                   maximumTrackTintColor="#ccc"
-                  thumbTintColor="#6200ee"
+                  thumbTintColor="#32a151"
                   style={{ flex: 1 }}
                 />
               </ThemedView>
@@ -135,7 +143,8 @@ export default function OnboardingScreen() {
             <Button
               mode="outlined"
               onPress={requestContactPermission}
-              style={styles.contactButton}
+              style={[styles.contactButton]}
+              textColor="#286b3b" // 텍스트 색상 적용
             >
               연락처에서 가져오기
             </Button>
@@ -156,7 +165,7 @@ export default function OnboardingScreen() {
                             : "unchecked"
                         }
                         onPress={() => toggleGuardian(contact.id)}
-                        color="#6200ee"
+                        color="#32a151"
                         uncheckedColor="#666"
                       />
                       <ThemedView style={styles.contactInfo}>
@@ -207,7 +216,7 @@ export default function OnboardingScreen() {
               onPress={() => setPrivacyExpanded(!privacyExpanded)}
             >
               <ThemedText style={styles.privacyButtonText}>
-                📄 개인정보 처리방침 {privacyExpanded ? "▼" : "▶"}
+                 개인정보 처리방침 {privacyExpanded ? "▼" : "▶"}
               </ThemedText>
             </TouchableOpacity>
 
@@ -230,6 +239,7 @@ export default function OnboardingScreen() {
               <Checkbox
                 status={privacyAgreed ? "checked" : "unchecked"}
                 onPress={() => setPrivacyAgreed(!privacyAgreed)}
+                color="#32a151"
               />
               <ThemedText style={styles.agreeText}>
                 개인정보 처리방침에 동의합니다
@@ -302,9 +312,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
+    
   },
   content: {
     flex: 1,
+    
   },
   stepContainer: {
     flex: 1,
@@ -324,7 +336,7 @@ const styles = StyleSheet.create({
 
   // Step 1: 글씨 크기
   fontPreviewBox: {
-    backgroundColor: "#E8F4FF",
+    backgroundColor: "#e8f5e6",
     padding: 40,
     borderRadius: 16,
     alignItems: "center",
@@ -334,10 +346,6 @@ const styles = StyleSheet.create({
   fontPreview: {
     fontWeight: "600",
     marginBottom: 10,
-  },
-  fontSizeLabel: {
-    fontSize: 14,
-    opacity: 0.6,
   },
   sliderContainer: {
     flexDirection: "row",
@@ -361,6 +369,7 @@ const styles = StyleSheet.create({
   contactButton: {
     marginBottom: 20,
     marginHorizontal: 30,
+    color: "#286b3b",
   },
   contactList: {
     flex: 1,
@@ -417,7 +426,7 @@ const styles = StyleSheet.create({
 
   // Step 3: 개인정보
   privacyButton: {
-    backgroundColor: "#F5F5F5",
+    backgroundColor: "#f8fbf8",
     padding: 15,
     borderRadius: 12,
     marginBottom: 20,
@@ -432,7 +441,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   privacyBox: {
-    backgroundColor: "#F5F5F5",
+    backgroundColor: "#f8fbf8",
     padding: 20,
     borderRadius: 12,
   },
@@ -473,13 +482,14 @@ const styles = StyleSheet.create({
   },
   indicatorActive: {
     width: 24,
-    backgroundColor: "#6200ee",
+    backgroundColor: "#32a151",
   },
   buttonContainer: {
     paddingBottom: 20,
   },
   button: {
     paddingVertical: 5,
+    backgroundColor: "#5DB075",
   },
   buttonDisabled: {
     backgroundColor: "#ccc",

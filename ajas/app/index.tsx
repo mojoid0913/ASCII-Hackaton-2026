@@ -1,5 +1,7 @@
 import { StyleSheet, Image, View, ScrollView } from "react-native";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import * as SMS from 'expo-sms';
+import { getSettings } from "@/util/Storage";
 import { useMemo } from "react";
 import { Surface, FAB } from "react-native-paper";
 import { Ionicons } from "@expo/vector-icons";
@@ -56,19 +58,19 @@ export default function HomeScreen() {
         return {
           text: "안전해요",
           icon: "checkmark-circle" as const,
-          color: "#4CAF50",
+          color: "#A0E398",
         };
       case AlertLevel.MEDIUM:
         return {
           text: "주의가 필요해요",
           icon: "warning" as const,
-          color: "#FF9800",
+          color: "#FFB84D",
         };
       case AlertLevel.HIGH:
         return {
           text: "위험해요",
           icon: "alert-circle" as const,
-          color: "#F44336",
+          color: "#FF6B6B",
         };
     }
   };
@@ -92,10 +94,29 @@ export default function HomeScreen() {
     }
   };
 
-  const handleRequestChildConfirmation = () => {
-    // TODO: Implement child confirmation request
-  };
+  const handleRequestChildConfirmation = async () => {
+    try {
+      const settings = await getSettings();
+      const phoneNumbers = settings?.guardians?.map(g => g.phoneNumber) || [];
+      if (phoneNumbers.length === 0) {
+        alert("등록된 보호자가 없습니다. 설정에서 보호자를 먼저 등록해주세요.");
+        return;
+      }
 
+      const isAvailable = await SMS.isAvailableAsync();
+      if (isAvailable) {
+        const message = `[안심알림] 보호자분, 확인 부탁드립니다.\n방금 모르는 번호(${latestAlert.sender})로부터 의심스러운 문자가 와서 앱이 탐지했습니다.\n\n내용: ${latestAlert.content}\n분석: ${latestAlert.reason}`;
+
+        await SMS.sendSMSAsync(phoneNumbers, message);
+      } else {
+        alert("이 기기에서는 문자 메시지 기능을 사용할 수 없습니다.");
+      }
+    } catch (error) {
+      console.error("문자 전송 중 오류:", error);
+      alert("보호자 정보를 불러오거나 문자를 보내는 데 실패했습니다.");
+    }
+  };
+  
   return (
     <ThemedView style={styles.container}>
       <ScrollView
