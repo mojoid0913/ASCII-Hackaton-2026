@@ -132,35 +132,43 @@ export default function HomeScreen() {
     <ThemedView style={styles.container}>
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
+        // 1. 하단 여백: 버튼에 가려지지 않게 끝까지 스크롤 허용
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: fontSize * 5 }]}
       >
         <View style={styles.alertHeader}>
-          <Ionicons name={alertInfo.icon} size={64} color={alertInfo.color} />
+          <Ionicons name={alertInfo.icon} size={fontSize * 3} color={alertInfo.color} />
           <ThemedText
             type="title"
-            style={[styles.alertText, { color: alertInfo.color }]}
+            // 2. 제목: lineHeight를 fontSize의 약 1.3배 이상 주어 겹침 방지
+            style={[styles.alertText, { color: alertInfo.color, fontSize: fontSize * 1.5, lineHeight: fontSize * 2 }]}
           >
             {alertInfo.text}
           </ThemedText>
         </View>
 
-        <Surface style={styles.surface} elevation={2}>
-          <ThemedText type="subtitle" style={styles.sectionTitle}>
+        {/* 3. Surface: height: 'auto'를 넣어 글자 크기에 따라 상자가 늘어나게 함 */}
+        <Surface style={[styles.surface, { height: 'auto' }]} elevation={2}>
+          <ThemedText type="subtitle" style={[styles.sectionTitle, { fontSize: fontSize, lineHeight: fontSize * 1.4 }]}>
             수신된 {appName} 내용
           </ThemedText>
           <View style={styles.messageInfo}>
-            <ThemedText type="defaultSemiBold" style={styles.sender}>
+            <ThemedText type="defaultSemiBold" style={[styles.sender, { fontSize: fontSize * 0.8 }]}>
               {latestAlert.sender}
             </ThemedText>
-            <ThemedText style={styles.content}>{truncatedContent}</ThemedText>
+            {/* 본문 줄간격 확보 */}
+            <ThemedText style={[styles.content, { fontSize: fontSize * 0.9, lineHeight: fontSize * 1.5 }]}>
+              {truncatedContent}
+            </ThemedText>
           </View>
         </Surface>
 
-        <Surface style={styles.surface} elevation={2}>
-          <ThemedText type="subtitle" style={styles.sectionTitle}>
+        <Surface style={[styles.surface, { height: 'auto' }]} elevation={2}>
+          <ThemedText type="subtitle" style={[styles.sectionTitle, { fontSize: fontSize, lineHeight: fontSize * 1.4 }]}>
             분석 결과
           </ThemedText>
-          <ThemedText style={styles.reason}>{latestAlert.reason}</ThemedText>
+          <ThemedText style={[styles.reason, { fontSize: fontSize * 0.9, lineHeight: fontSize * 1.5 }]}>
+            {latestAlert.reason}
+          </ThemedText>
         </Surface>
       </ScrollView>
 
