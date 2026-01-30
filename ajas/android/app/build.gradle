@@ -179,9 +179,4 @@ dependencies {
     } else {
         implementation jscFlavor
     }
-
-    implementation project(':react-native-notifications')
-    implementation('com.google.firebase:firebase-core:16.0.0')
 }
-
-apply plugin: 'com.google.gms.google-services'
