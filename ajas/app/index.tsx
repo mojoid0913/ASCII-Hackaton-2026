@@ -1,15 +1,20 @@
 import { StyleSheet, Image, View, ScrollView } from "react-native";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo } from "react";
-import { Surface } from "react-native-paper";
+import { Surface, FAB } from "react-native-paper";
 import { Ionicons } from "@expo/vector-icons";
 import { ThemedView } from "@/components/themed-view";
 import { ThemedText } from "@/components/themed-text";
-import { listAnalyzeHistory } from "@/util/analyzeHistoryStorage";
+import {
+  AnalyzeHistoryItem,
+  listAnalyzeHistory,
+} from "@/util/analyzeHistoryStorage";
+import { dismissAnalyzeHistory } from "@/util/dismissAnalyzeHistory";
 import { AlertLevel } from "@/util/alertLevel";
 import { TARGET_PACKAGE_NAMES_HUMAN_READABLE } from "@/constants/targetPackage";
 
 export default function HomeScreen() {
+  const queryClient = useQueryClient();
   const { data, isLoading, isError } = useQuery({
     queryKey: ["analyzeHistory"],
     queryFn: listAnalyzeHistory,
@@ -78,6 +83,19 @@ export default function HomeScreen() {
       ? latestAlert.content.slice(0, 500) + "..."
       : latestAlert.content;
 
+  const handleDismiss = async () => {
+    try {
+      await dismissAnalyzeHistory(latestAlert.id);
+      queryClient.invalidateQueries({ queryKey: ["analyzeHistory"] });
+    } catch (error) {
+      console.error("Failed to dismiss alert:", error);
+    }
+  };
+
+  const handleRequestChildConfirmation = () => {
+    // TODO: Implement child confirmation request
+  };
+
   return (
     <ThemedView style={styles.container}>
       <ScrollView
@@ -113,6 +131,25 @@ export default function HomeScreen() {
           <ThemedText style={styles.reason}>{latestAlert.reason}</ThemedText>
         </Surface>
       </ScrollView>
+
+      <View style={styles.fabContainer}>
+        <FAB
+          icon="account-child"
+          label="자녀에게 확인요청"
+          onPress={handleRequestChildConfirmation}
+          style={styles.fabLeft}
+          mode="elevated"
+          color="#fff"
+        />
+        <FAB
+          icon="close"
+          label="무시하기"
+          onPress={handleDismiss}
+          style={styles.fabRight}
+          mode="elevated"
+          color="#666"
+        />
+      </View>
     </ThemedView>
   );
 }
@@ -179,5 +216,20 @@ const styles = StyleSheet.create({
   reason: {
     fontSize: 14,
     lineHeight: 20,
+  },
+  fabContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    padding: 16,
+    gap: 12,
+    paddingBottom: 20,
+  },
+  fabLeft: {
+    flex: 1,
+    backgroundColor: "#6200EE",
+  },
+  fabRight: {
+    flex: 1,
+    backgroundColor: "#E0E0E0",
   },
 });
