@@ -11,3 +11,4 @@ datasets
 pandas
 langchain-chroma
 langchain-google-genai
+sentence-transformers

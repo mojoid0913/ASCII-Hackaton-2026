@@ -10,13 +10,15 @@ import datetime
 import json
 from crawler import inspect_url
 import re
+from langchain_huggingface import HuggingFaceEmbeddings
 
-# [RAG 설정]
-# 서버 시작할 때 DB를 메모리에 로드합니다.
+# 1. 임베딩 모델 준비 (DB 만들 때 쓴 거랑 똑같은 놈이어야 함!)
 print("📂 벡터 DB 로딩 중...")
-embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
+embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+
+# 2. 벡터 DB 연결
 vector_db = Chroma(
-    persist_directory="./chroma_db",  # sync_db.py가 만든 폴더 경로
+    persist_directory="/home/mojoid0913/chroma_db",  # 아까 만든 그 폴더
     embedding_function=embeddings
 )
 
@@ -38,7 +40,7 @@ safety_settings = {
 }
 
 # 모델 설정
-model = genai.GenerativeModel('gemini-3-flash-preview', safety_settings=safety_settings)
+model = genai.GenerativeModel('gemini-3-flash-preview', temperature=0.1,safety_settings=safety_settings)
 
 app = FastAPI()
 
