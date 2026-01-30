@@ -17,6 +17,14 @@ services:
       - db_data:/var/lib/mysql
       - ./ddl:/docker-entrypoint-initdb.d
 
+  selenium:
+    image: selenium/standalone-chrome:latest
+    container_name: selenium-chrome
+    ports:
+      - "4444:4444"  # 파이썬이 접속하는 포트
+      - "7900:7900"  # 사람이 눈으로 보는 포트 (웹 VNC)
+    shm_size: "2gb"  # 크롬이 뻗지 않게 메모리 공유 설정
+
   backend:
     build: .
     volumes:

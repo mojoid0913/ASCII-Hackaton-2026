@@ -8,6 +8,9 @@ from google.generativeai.types import HarmCategory, HarmBlockThreshold
 import os
 import datetime
 import json
+from crawler import inspect_url
+import re
+
 
 # --- 설정 ---
 DB_URL = os.getenv("DB_URL")
