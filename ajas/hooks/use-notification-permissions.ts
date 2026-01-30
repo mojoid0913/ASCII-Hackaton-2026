@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import * as SplashScreen from "expo-splash-screen";
 import NotificationsModule from "@/modules/notifications/src/NotificationsModule";
 import analyzeMessage from "@/api/analyzeMessage";
 import { TARGET_PACKAGE_NAMES } from "@/constants/targetPackage";
+import { showLocalNotification } from "./use-expo-notifications";
+import { AlertLevel, judgeAlertLevel } from "@/util/alertLevel";
 
 export function useNotificationPermissions() {
   const [isReady, setIsReady] = useState(false);
@@ -67,8 +68,19 @@ export function useNotificationPermissions() {
             })
               .then((response) => {
                 console.log("[Notification Analysis] Response:", response);
+                if (!response.isSuccessful) {
+                  console.error(
+                    "[Notification Analysis] Failed to analyze message:",
+                    response.message,
+                  );
+                  return;
+                }
+                const alertLevel = judgeAlertLevel(response.risk_score);
                 //TODO: 분석 결과 히스토리에 저장
-                //TODO: 위험 알림 발송
+
+                if (alertLevel === AlertLevel.SAFE) {
+                  showLocalNotification("⚠️의심 문자입니다", "");
+                }
               })
               .catch((error) => {
                 console.error("[Notification Analysis] Error:", error);
@@ -76,11 +88,7 @@ export function useNotificationPermissions() {
           },
         );
 
-        console.log(
-          "[useNotificationPermissions] Setup complete, hiding splash screen",
-        );
-        // Splash 화면 숨김
-        await SplashScreen.hideAsync();
+        console.log("[useNotificationPermissions] Setup complete");
         setIsReady(true);
 
         return () => {
@@ -90,11 +98,6 @@ export function useNotificationPermissions() {
         };
       } catch (error) {
         console.error("[useNotificationPermissions] Error:", error);
-        try {
-          await SplashScreen.hideAsync();
-        } catch (e) {
-          // Ignore errors hiding splash
-        }
         process.exit(1);
       }
     })();
