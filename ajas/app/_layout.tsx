@@ -8,12 +8,23 @@ import { SplashScreen, Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import "react-native-reanimated";
 import { useEffect, useState } from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useNotificationPermissions } from "@/hooks/use-notification-permissions";
 import { useExpoNotificationPermissions } from "@/hooks/use-expo-notifications";
 import { initializeAnalyzeHistoryStorage } from "@/util/analyzeHistoryStorage";
+import AjasNavigationBar from "@/components/AjasNavigationBar";
 
 SplashScreen.preventAutoHideAsync();
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      staleTime: 30_000,
+    },
+  },
+});
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -55,19 +66,42 @@ export default function RootLayout() {
   }
 
   return (
-    <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-      <PaperProvider
-        theme={colorScheme === "dark" ? MD3DarkTheme : MD3LightTheme}
-      >
-        <Stack>
-          <Stack.Screen name="index" options={{ headerShown: false }} />
-          <Stack.Screen
-            name="settings"
-            options={{ presentation: "modal", title: "설정" }}
-          />
-        </Stack>
-        <StatusBar style="auto" />
-      </PaperProvider>
-    </ThemeProvider>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+        <PaperProvider
+          theme={colorScheme === "dark" ? MD3DarkTheme : MD3LightTheme}
+        >
+          <Stack>
+            <Stack.Screen
+              name="index"
+              options={{
+                header: (props) => (
+                  <AjasNavigationBar
+                    {...props}
+                    showBackButton={false}
+                    showSettingsButton={true}
+                  />
+                ),
+              }}
+            />
+            <Stack.Screen
+              name="settings"
+              options={{
+                presentation: "modal",
+                title: "설정",
+                header: (props) => (
+                  <AjasNavigationBar
+                    {...props}
+                    showBackButton={true}
+                    showSettingsButton={false}
+                  />
+                ),
+              }}
+            />
+          </Stack>
+          <StatusBar style="auto" />
+        </PaperProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
   );
 }
