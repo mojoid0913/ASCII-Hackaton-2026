@@ -12,6 +12,7 @@ import json
 import re
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_chroma import Chroma # 👈 (추가) 이거 없으면 Chroma 에러남
+from fastapi.middleware.cors import CORSMiddleware
 
 # 1. 임베딩 모델 준비
 print("📂 벡터 DB 로딩 중...")
@@ -47,6 +48,13 @@ safety_settings = {
 model = genai.GenerativeModel('gemini-3-flash-preview', safety_settings=safety_settings)
 
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],      # 모든 곳에서 오는 요청을 허용합니다 (해커톤 필수 설정)
+    allow_credentials=True,
+    allow_methods=["*"],      # GET, POST 등 모든 방식 허용
+    allow_headers=["*"],      # 모든 헤더 허용
+)
 
 # --- DB 모델 ---
 class ScanLog(Base):
