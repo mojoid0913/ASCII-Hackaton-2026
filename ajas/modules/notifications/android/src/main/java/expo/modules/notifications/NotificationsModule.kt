@@ -1,50 +1,159 @@
 package expo.modules.notifications
 
+import android.content.ComponentName
+import android.content.Context
+import android.content.Intent
+import android.provider.Settings
+import android.text.TextUtils
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
-import java.net.URL
 
 class NotificationsModule : Module() {
-  // Each module class must implement the definition function. The definition consists of components
-  // that describes the module's functionality and behavior.
-  // See https://docs.expo.dev/modules/module-api for more details about available components.
+  private val context: Context
+    get() = requireNotNull(appContext.reactContext)
+
   override fun definition() = ModuleDefinition {
-    // Sets the name of the module that JavaScript code will use to refer to the module. Takes a string as an argument.
-    // Can be inferred from module's class name, but it's recommended to set it explicitly for clarity.
-    // The module will be accessible from `requireNativeModule('Notifications')` in JavaScript.
     Name("Notifications")
 
-    // Defines constant property on the module.
-    Constant("PI") {
-      Math.PI
+    // Events that can be sent to JavaScript
+    Events("onNotificationPosted", "onNotificationRemoved")
+
+    // Check if notification listener permission is granted
+    Function("isPermissionGranted") { isNotificationListenerEnabled() }
+
+    // Check if listener service is currently connected
+    Function("isListenerConnected") { NotificationListenerService.isConnected }
+
+    // Open notification listener settings to request permission
+    AsyncFunction("requestPermission") {
+      val intent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
+      intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+      context.startActivity(intent)
     }
 
-    // Defines event names that the module can send to JavaScript.
-    Events("onChange")
-
-    // Defines a JavaScript synchronous function that runs the native code on the JavaScript thread.
-    Function("hello") {
-      "Hello world! 👋"
-    }
-
-    // Defines a JavaScript function that always returns a Promise and whose native code
-    // is by default dispatched on the different thread than the JavaScript runtime runs on.
-    AsyncFunction("setValueAsync") { value: String ->
-      // Send an event to JavaScript.
-      sendEvent("onChange", mapOf(
-        "value" to value
-      ))
-    }
-
-    // Enables the module to be used as a native view. Definition components that are accepted as part of
-    // the view definition: Prop, Events.
-    View(NotificationsView::class) {
-      // Defines a setter for the `url` prop.
-      Prop("url") { view: NotificationsView, url: URL ->
-        view.webView.loadUrl(url.toString())
+    // Start listening to notifications (register callbacks)
+    Function("startListening") {
+      if (!isNotificationListenerEnabled()) {
+        throw Exception("Notification listener permission not granted")
       }
-      // Defines an event that the view can send to JavaScript.
-      Events("onLoad")
+
+      NotificationListenerService.onNotificationPosted = { data ->
+        sendEvent(
+                "onNotificationPosted",
+                mapOf(
+                        "id" to data.id,
+                        "key" to data.key,
+                        "packageName" to data.packageName,
+                        "postTime" to data.postTime,
+                        "title" to data.title,
+                        "text" to data.text,
+                        "subText" to data.subText,
+                        "bigText" to data.bigText,
+                        "category" to data.category,
+                        "isOngoing" to data.isOngoing,
+                        "isClearable" to data.isClearable
+                )
+        )
+      }
+
+      NotificationListenerService.onNotificationRemoved = { data ->
+        sendEvent(
+                "onNotificationRemoved",
+                mapOf(
+                        "id" to data.id,
+                        "key" to data.key,
+                        "packageName" to data.packageName,
+                        "postTime" to data.postTime,
+                        "title" to data.title,
+                        "text" to data.text,
+                        "subText" to data.subText,
+                        "bigText" to data.bigText,
+                        "category" to data.category,
+                        "isOngoing" to data.isOngoing,
+                        "isClearable" to data.isClearable
+                )
+        )
+      }
+
+      true
     }
+
+    // Stop listening to notifications (unregister callbacks)
+    Function("stopListening") {
+      NotificationListenerService.onNotificationPosted = null
+      NotificationListenerService.onNotificationRemoved = null
+      true
+    }
+
+    // Get all currently active notifications
+    AsyncFunction("getActiveNotifications") {
+      if (!isNotificationListenerEnabled()) {
+        throw Exception("Notification listener permission not granted")
+      }
+
+      val service =
+              NotificationListenerService.instance
+                      ?: throw Exception("Notification listener service not connected")
+
+      service.getActiveNotificationsData().map { data ->
+        mapOf(
+                "id" to data.id,
+                "key" to data.key,
+                "packageName" to data.packageName,
+                "postTime" to data.postTime,
+                "title" to data.title,
+                "text" to data.text,
+                "subText" to data.subText,
+                "bigText" to data.bigText,
+                "category" to data.category,
+                "isOngoing" to data.isOngoing,
+                "isClearable" to data.isClearable
+        )
+      }
+    }
+
+    // Cancel a specific notification by key
+    AsyncFunction("cancelNotification") { key: String ->
+      if (!isNotificationListenerEnabled()) {
+        throw Exception("Notification listener permission not granted")
+      }
+
+      val service =
+              NotificationListenerService.instance
+                      ?: throw Exception("Notification listener service not connected")
+
+      service.cancelNotification(key)
+      true
+    }
+
+    // Cancel all notifications
+    AsyncFunction("cancelAllNotifications") {
+      if (!isNotificationListenerEnabled()) {
+        throw Exception("Notification listener permission not granted")
+      }
+
+      val service =
+              NotificationListenerService.instance
+                      ?: throw Exception("Notification listener service not connected")
+
+      service.cancelAllNotifications()
+      true
+    }
+  }
+
+  private fun isNotificationListenerEnabled(): Boolean {
+    val packageName = context.packageName
+    val flat = Settings.Secure.getString(context.contentResolver, "enabled_notification_listeners")
+
+    if (!TextUtils.isEmpty(flat)) {
+      val names = flat.split(":").toTypedArray()
+      for (name in names) {
+        val cn = ComponentName.unflattenFromString(name)
+        if (cn != null && TextUtils.equals(packageName, cn.packageName)) {
+          return true
+        }
+      }
+    }
+    return false
   }
 }

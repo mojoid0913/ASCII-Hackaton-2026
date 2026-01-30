@@ -6,14 +6,9 @@ import ParallaxScrollView from "@/components/parallax-scroll-view";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { Link } from "expo-router";
-import { useEffect } from "react";
-import notifications from "@/modules/notifications";
+import NotificationListener from "@/components/NotificationListener";
 
 export default function HomeScreen() {
-  useEffect(() => {
-    console.log(notifications.hello());
-  }, []);
-
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: "#A1CEDC", dark: "#1D3D47" }}
@@ -24,6 +19,7 @@ export default function HomeScreen() {
         />
       }
     >
+      <NotificationListener />
       <ThemedView style={styles.titleContainer}>
         <ThemedText type="title">Welcome!</ThemedText>
         <HelloWave />

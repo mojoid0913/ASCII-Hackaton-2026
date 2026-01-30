@@ -1,19 +1,20 @@
-import type { StyleProp, ViewStyle } from 'react-native';
-
-export type OnLoadEventPayload = {
-  url: string;
+// Notification data received from the listener
+export type NotificationData = {
+  id: string;
+  key: string;
+  packageName: string;
+  postTime: number;
+  title: string;
+  text: string;
+  subText: string;
+  bigText: string;
+  category: string;
+  isOngoing: boolean;
+  isClearable: boolean;
 };
 
+// Events emitted by the Notifications module
 export type NotificationsModuleEvents = {
-  onChange: (params: ChangeEventPayload) => void;
-};
-
-export type ChangeEventPayload = {
-  value: string;
-};
-
-export type NotificationsViewProps = {
-  url: string;
-  onLoad: (event: { nativeEvent: OnLoadEventPayload }) => void;
-  style?: StyleProp<ViewStyle>;
+  onNotificationPosted: (notification: NotificationData) => void;
+  onNotificationRemoved: (notification: NotificationData) => void;
 };
