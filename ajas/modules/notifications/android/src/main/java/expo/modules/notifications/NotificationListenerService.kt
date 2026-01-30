@@ -1,8 +1,10 @@
 package expo.modules.notifications
 
+import android.app.Notification
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import android.util.Log
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -17,6 +19,9 @@ import org.json.JSONObject
 class NotificationListenerService : NotificationListenerService() {
     companion object {
         private const val TAG = "NotificationListener"
+
+        // Deduplication timeout in milliseconds (ignore duplicate notifications within this window)
+        private const val DEDUP_TIMEOUT_MS = 2000L
 
         // API endpoint for message analysis
         var apiEndpoint: String = "http://10.0.2.2:8000" // Default for Android emulator
@@ -36,6 +41,10 @@ class NotificationListenerService : NotificationListenerService() {
         val isConnected: Boolean
             get() = instance != null
     }
+
+    // Track recently processed notifications to avoid duplicates
+    // Key: notification key, Value: timestamp when processed
+    private val recentlyProcessed = ConcurrentHashMap<String, Long>()
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
@@ -61,11 +70,30 @@ class NotificationListenerService : NotificationListenerService() {
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
         super.onNotificationPosted(sbn)
         sbn?.let { notification ->
+            val isGroupSummary =
+                    (notification.notification.flags and Notification.FLAG_GROUP_SUMMARY) != 0
+            if (isGroupSummary) {
+                Log.d(TAG, "Skipping group summary notification: ${notification.key}")
+                return
+            }
+
+            val now = System.currentTimeMillis()
+            val lastProcessed = recentlyProcessed[notification.key]
+            if (lastProcessed != null && (now - lastProcessed) < DEDUP_TIMEOUT_MS) {
+                Log.d(TAG, "Skipping duplicate notification: ${notification.key}")
+                return
+            }
+
+            cleanupRecentlyProcessed(now)
+
             val data = extractNotificationData(notification)
             Log.d(TAG, "Notification posted: ${data.packageName}")
 
             // Only analyze notifications from target packages
             if (targetPackageNames.contains(data.packageName)) {
+                // Mark as processed before starting async work
+                recentlyProcessed[notification.key] = now
+
                 Log.d(TAG, "Target package detected, analyzing: ${data.packageName}")
                 // Analyze the notification in background
                 serviceScope.launch {
@@ -74,15 +102,24 @@ class NotificationListenerService : NotificationListenerService() {
                 }
             } else {
                 Log.d(TAG, "Skipping non-target package: ${data.packageName}")
-                // Still emit the event but without analysis
-                onNotificationPosted?.invoke(data)
             }
         }
+    }
+
+    private fun cleanupRecentlyProcessed(now: Long) {
+        val expiredKeys =
+                recentlyProcessed.entries.filter { (now - it.value) > DEDUP_TIMEOUT_MS * 5 }.map {
+                    it.key
+                }
+        expiredKeys.forEach { recentlyProcessed.remove(it) }
     }
 
     override fun onNotificationRemoved(sbn: StatusBarNotification?) {
         super.onNotificationRemoved(sbn)
         sbn?.let { notification ->
+            // Remove from recently processed when notification is removed
+            recentlyProcessed.remove(notification.key)
+
             val data = extractNotificationData(notification)
             Log.d(TAG, "Notification removed: ${data.packageName}")
             onNotificationRemoved?.invoke(data)
