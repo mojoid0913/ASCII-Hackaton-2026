@@ -3,12 +3,14 @@ import os
 import time
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common import By
+from selenium.webdriver.common.keys import Keys
 
-def inspect_url(target_url: str):
+def inspect_url(phone_number):
     """
     Selenium 컨테이너(Remote)를 통해 URL에 접속하고 정보를 가져옵니다.
     """
-    print(f"🕵️‍♂️ 크롤러 시작: {target_url} 검사 중...")
+    print(f"🕵️‍♂️ 크롤러 시작")
 
     # 1. 옵션 설정
     chrome_options = Options()
@@ -24,12 +26,8 @@ def inspect_url(target_url: str):
     selenium_hub_url = os.getenv("SELENIUM_URL", "http://selenium:4444/wd/hub")
 
     driver = None
-    result = {
-        "status": "fail",
-        "title": "",
-        "final_url": "",
-        "error": ""
-    }
+
+    result=0
 
     try:
         # 원격 브라우저 연결
@@ -39,7 +37,7 @@ def inspect_url(target_url: str):
         )
 
         # 3. URL 접속
-        driver.get(target_url)
+        driver.get("https://www.counterscam112.go.kr/phishing/searchPhone.do")
         
         # 페이지 로딩 대기 (3초)
         time.sleep(3)
@@ -48,11 +46,25 @@ def inspect_url(target_url: str):
         result["status"] = "success"
         result["title"] = driver.title
         result["final_url"] = driver.current_url
+
+        element=driver.find_element(By.ID, "tel_num")
+        element.clear()
+        element.send_keys(phone_number)
+
+        element.send_keys(Keys.RETURN)
+
+        time.sleep(1)
+
+        val=driver.find_element(By.ID,"search-sms-cnt").text
+
+        try:
+            if((int)(val)!=0):
+                result=1
+        except:
+            result=0
         
-        # (선택) 스크린샷 저장 - 나중에 사용자에게 보여줄 이미지
-        # driver.save_screenshot(f"/app/data/{target_url.split('//')[-1]}.png")
         
-        print(f"✅ 크롤링 성공: {result['title']}")
+        print(f"✅ 크롤링 성공: "+str(result))
 
     except Exception as e:
         print(f"❌ 크롤링 에러: {e}")

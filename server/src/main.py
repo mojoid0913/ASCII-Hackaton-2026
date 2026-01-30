@@ -11,6 +11,15 @@ import json
 from crawler import inspect_url
 import re
 
+# [RAG 설정]
+# 서버 시작할 때 DB를 메모리에 로드합니다.
+print("📂 벡터 DB 로딩 중...")
+embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
+vector_db = Chroma(
+    persist_directory="./chroma_db",  # sync_db.py가 만든 폴더 경로
+    embedding_function=embeddings
+)
+
 
 # --- 설정 ---
 DB_URL = os.getenv("DB_URL")
@@ -56,12 +65,19 @@ def run_selenium_check(url_or_phone: str):
 @app.post("/analyze")
 async def analyze(req: SmsRequest):
     # 프롬프트 설정
-    prompt = f"""[System Prompt]
-당신은 디지털 취약계층을 위한 보안 도우미입니다.
-다음 형식으로만 답변하세요: 위험도점수(0~100)|친절한설명
-예시: 90|위험해요! 절대 누르지 마세요.
+        prompt = f"""[System Prompt]
+당신은 디지털 취약계층(고령층, 장애인 등)을 위한 보안 도우미입니다.
+사용자가 입력한 문자를 분석하여 위험 여부를 판단하고, 다음 원칙에 따라 답변하세요.
 
-[Message] '{req.content}'"""
+쉬운 우리말 사용: 'URL', '피싱', '계정' 같은 IT 용어를 쓰지 마세요. 대신 '인터넷 주소', '사기', '내 정보' 등으로 풀어서 설명하세요.
+결론부터 말하기: 첫 문장은 무조건 "위험해요!" 혹은 "안전해요."로 시작하세요.
+청각적 배려: 시각장애인이 음성 안내(TTS)로 들을 수 있으므로, 특수문자나 무의미한 이모지 반복을 피하세요.
+존중하는 태도: 쉬운 말을 쓰되, 예의 바르고 정중한 경어체(해요체)를 사용하세요. 어린아이를 대하듯 하지 마세요.
+행동 유도: 마지막에는 사용자가 해야 할 행동을 하나만 딱 집어서 알려주세요. (예: "답장하지 말고 바로 지우세요.")
+    다음 형식으로만 답변하세요: 위험도점수(0~100)|친절한설명
+    예시: 90|위험해요! 절대 누르지 마세요.
+
+    [Message] '{req.content}'"""
     
     print(f"📡 Gemini 요청: {req.content[:20]}...") 
 
