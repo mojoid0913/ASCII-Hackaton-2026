@@ -19,7 +19,15 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-model = genai.GenerativeModel('gemini-1.5-pro')
+
+# 💡 안전 설정 추가: "위험한 말이라도 차단하지 마라" (스미싱 분석용 필수)
+safety_settings = {
+    HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
+    HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
+    HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
+    HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
+}
+model = genai.GenerativeModel('gemini-1.5-pro', safety_settings=safety_settings)
 
 app = FastAPI()
 
@@ -65,17 +73,33 @@ def run_selenium_check(url_or_phone: str):
 @app.post("/analyze")
 async def analyze(req: SmsRequest):
     # 1. Gemini 분석
-    prompt = f"문자내용: '{req.content}'. 스미싱 위험도를 0~100 숫자만 출력해."
-    #try:
-    response = model.generate_content(prompt)
-    score = int(''.join(filter(str.isdigit, response.text)))
-    #except:
-        #score = 50 # 에러 시 기본값
+    prompt = f"다음 문자 메시지의 스미싱(사기) 위험도를 0에서 100 사이의 숫자만으로 응답해. 부연 설명 하지마.\n\n문자내용: '{req.content}'"
+    
+    print(f"📡 Gemini 요청: {req.content[:20]}...") # 로그 확인용
 
-    # 2. Selenium 조회 (URL이 있거나 필요시)
-    # run_selenium_check(req.content) 
+    try:
+        response = model.generate_content(prompt)
+        
+        # 디버깅: Gemini가 뭐라고 대답했는지 로그에 찍기
+        print(f"🤖 Gemini 응답 원본: {response.text}") 
+        
+        # 숫자만 추출 (예: "위험도는 90입니다" -> 90)
+        score_str = ''.join(filter(str.isdigit, response.text))
+        
+        if not score_str:
+            print("⚠️ 숫자 추출 실패! 기본값 50 설정")
+            score = 50
+        else:
+            score = int(score_str)
 
-    # 3. DB 저장
+    except Exception as e:
+        # 에러가 나면 로그에 자세히 찍고, 클라이언트에는 500 에러 대신 결과를 줌
+        print(f"❌ Gemini 치명적 에러: {e}")
+        # (선택) 에러나도 서버가 안 죽게 하려면 아래 주석 해제
+        # score = 50 
+        raise HTTPException(status_code=500, detail=f"Gemini Error: {str(e)}")
+
+    # ... (이하 DB 저장 로직 동일)
     db = SessionLocal()
     log = ScanLog(sender=req.sender, content=req.content, risk_score=score)
     db.add(log)
