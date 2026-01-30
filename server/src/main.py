@@ -66,11 +66,11 @@ def run_selenium_check(url_or_phone: str):
 async def analyze(req: SmsRequest):
     # 1. Gemini 분석
     prompt = f"문자내용: '{req.content}'. 스미싱 위험도를 0~100 숫자만 출력해."
-    try:
-        response = model.generate_content(prompt)
-        score = int(''.join(filter(str.isdigit, response.text)))
-    except:
-        score = 50 # 에러 시 기본값
+    #try:
+    response = model.generate_content(prompt)
+    score = int(''.join(filter(str.isdigit, response.text)))
+    #except:
+        #score = 50 # 에러 시 기본값
 
     # 2. Selenium 조회 (URL이 있거나 필요시)
     # run_selenium_check(req.content) 
