@@ -1,23 +1,31 @@
-import { StyleSheet } from "react-native";
-import { Link } from "expo-router";
-import { Button } from "react-native-paper";
+import { StyleSheet, Image, View } from "react-native";
+import { useQuery } from "@tanstack/react-query";
 
-import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { ThemedText } from "@/components/themed-text";
+import { listAnalyzeHistory } from "@/util/analyzeHistoryStorage";
 
 export default function HomeScreen() {
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["analyzeHistory"],
+    queryFn: listAnalyzeHistory,
+  });
+
   return (
     <ThemedView style={styles.container}>
-      <ThemedText type="title">홈페이지</ThemedText>
-      <ThemedText style={styles.description}>
-        홈페이지 플레이스홀더입니다.
-      </ThemedText>
-
-      <Link href="/settings" asChild>
-        <Button mode="contained" style={styles.button}>
-          설정으로 이동
-        </Button>
-      </Link>
+      <View style={styles.centerContent}>
+        <Image
+          source={require("@/assets/images/icon.png")}
+          style={styles.icon}
+          resizeMode="contain"
+        />
+        <ThemedText type="title" style={styles.mainText}>
+          지금 보호 중입니다
+        </ThemedText>
+        <ThemedText style={styles.subText}>
+          문자 메세지를 실시간으로 감시하고 있어요
+        </ThemedText>
+      </View>
     </ThemedView>
   );
 }
@@ -29,12 +37,23 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     padding: 20,
   },
-  description: {
-    marginTop: 10,
-    marginBottom: 30,
-    opacity: 0.7,
+  centerContent: {
+    alignItems: "center",
+    justifyContent: "center",
   },
-  button: {
-    marginTop: 20,
+  icon: {
+    width: 120,
+    height: 120,
+    marginBottom: 32,
+  },
+  mainText: {
+    fontSize: 28,
+    fontWeight: "bold",
+    marginBottom: 12,
+  },
+  subText: {
+    fontSize: 14,
+    color: "#666",
+    opacity: 0.7,
   },
 });
