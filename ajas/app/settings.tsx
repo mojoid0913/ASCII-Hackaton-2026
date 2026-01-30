@@ -156,6 +156,8 @@ export default function OnboardingScreen() {
                             : "unchecked"
                         }
                         onPress={() => toggleGuardian(contact.id)}
+                        color="#6200ee"
+                        uncheckedColor="#666"
                       />
                       <View style={styles.contactInfo}>
                         <ThemedText style={styles.contactName}>
