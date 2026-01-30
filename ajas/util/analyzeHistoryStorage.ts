@@ -90,8 +90,6 @@ export async function saveAnalyzeHistory(
 ): Promise<AnalyzeHistoryItem> {
   await initializeAnalyzeHistoryStorage();
 
-  queryClient.invalidateQueries({ queryKey: ["analyzeHistory"] });
-
   const item: AnalyzeHistoryItem = {
     id: createId(),
     createdAt: input.createdAt ?? Date.now(),
@@ -123,6 +121,8 @@ export async function saveAnalyzeHistory(
       removedIds.map((removedId) => buildItemKey(removedId)),
     );
   }
+
+  queryClient.invalidateQueries({ queryKey: ["analyzeHistory"] });
 
   return item;
 }

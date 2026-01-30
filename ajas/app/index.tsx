@@ -45,7 +45,7 @@ export default function HomeScreen() {
         (item) => !item.dismissed && item.alertLevel !== AlertLevel.SAFE,
       ) || null
     );
-  }, [data]);
+  }, [data, isLoading]);
 
   if (!latestAlert) {
     return (
