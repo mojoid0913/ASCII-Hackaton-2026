@@ -40,7 +40,7 @@ safety_settings = {
     }
 
 
-model = genai.GenerativeModel('gemini-pro', safety_settings=safety_settings)
+model = genai.GenerativeModel('gemini-3-flash-preview', safety_settings=safety_settings)
 
 app = FastAPI()
 
