@@ -28,7 +28,8 @@ services:
   backend:
     build: .
     volumes:
-    - ./src:/app/src  # <--- 이 줄이 핵심! (내 src 폴더를 도커랑 연결)  
+      - /home/mojoid0913/chroma_db:/home/mojoid0913/chroma_db
+      - ./src:/app/src  # <--- 이 줄이 핵심! (내 src 폴더를 도커랑 연결)  
     restart: always
     ports:
       - "8000:8000"
