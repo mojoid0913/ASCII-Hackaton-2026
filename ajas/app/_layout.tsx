@@ -12,6 +12,7 @@ import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useNotificationPermissions } from "@/hooks/use-notification-permissions";
 import { useExpoNotificationPermissions } from "@/hooks/use-expo-notifications";
 import { initializeAnalyzeHistoryStorage } from "@/util/analyzeHistoryStorage";
+import AjasNavigationBar from "@/components/AjasNavigationBar";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -60,10 +61,31 @@ export default function RootLayout() {
         theme={colorScheme === "dark" ? MD3DarkTheme : MD3LightTheme}
       >
         <Stack>
-          <Stack.Screen name="index" options={{ headerShown: false }} />
+          <Stack.Screen
+            name="index"
+            options={{
+              header: (props) => (
+                <AjasNavigationBar
+                  {...props}
+                  showBackButton={false}
+                  showSettingsButton={true}
+                />
+              ),
+            }}
+          />
           <Stack.Screen
             name="settings"
-            options={{ presentation: "modal", title: "설정" }}
+            options={{
+              presentation: "modal",
+              title: "설정",
+              header: (props) => (
+                <AjasNavigationBar
+                  {...props}
+                  showBackButton={true}
+                  showSettingsButton={false}
+                />
+              ),
+            }}
           />
         </Stack>
         <StatusBar style="auto" />
