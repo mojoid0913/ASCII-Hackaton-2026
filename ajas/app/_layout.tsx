@@ -9,23 +9,15 @@ import { StatusBar } from "expo-status-bar";
 import "react-native-reanimated";
 import { useEffect, useState } from "react";
 import { BackHandler } from "react-native";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { initExpoNotifications } from "@/hooks/use-expo-notifications";
 import { initNotificationListener } from "@/hooks/use-notification-permissions";
 import { initializeAnalyzeHistoryStorage } from "@/util/analyzeHistoryStorage";
 import AjasNavigationBar from "@/components/AjasNavigationBar";
+import { queryClient } from "@/global/queryClient";
 
 SplashScreen.preventAutoHideAsync();
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 1,
-      staleTime: 30_000,
-    },
-  },
-});
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
