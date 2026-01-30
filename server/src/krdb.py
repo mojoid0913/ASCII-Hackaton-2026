@@ -43,7 +43,6 @@ for row in dataset:
     cur.execute(
         "INSERT INTO sms_dataset (content, label) VALUES (%s, %s)",
         (content, cls)
-    )
 conn.commit()
 cur.close()
 conn.close()
