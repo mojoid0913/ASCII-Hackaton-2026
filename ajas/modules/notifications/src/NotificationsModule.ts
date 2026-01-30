@@ -29,6 +29,9 @@ declare class NotificationsModule extends NativeModule<NotificationsModuleEvents
 
   // Cancel all notifications
   cancelAllNotifications(): Promise<boolean>;
+
+  // Fire a test dummy notification with random phone number and test message
+  fireDummyNotification(): Promise<void>;
 }
 
 // This call loads the native module object from the JSI.
