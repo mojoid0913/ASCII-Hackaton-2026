@@ -18,7 +18,7 @@ class NotificationsModuleWeb extends EventEmitter<NotificationsModuleEvents> {
     console.warn(
       "[Notifications] Notification listener is not supported on web",
     );
-    return false;
+    return true;
   }
 
   // Always returns false on web - listener service not available
