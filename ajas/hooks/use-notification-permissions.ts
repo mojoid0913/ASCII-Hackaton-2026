@@ -4,6 +4,7 @@ import analyzeMessage from "@/api/analyzeMessage";
 import { TARGET_PACKAGE_NAMES } from "@/constants/targetPackage";
 import { showLocalNotification } from "./use-expo-notifications";
 import { AlertLevel, judgeAlertLevel } from "@/util/alertLevel";
+import { saveAnalyzeHistory } from "@/util/analyzeHistoryStorage";
 
 export function useNotificationPermissions() {
   const [isReady, setIsReady] = useState(false);
@@ -76,7 +77,20 @@ export function useNotificationPermissions() {
                   return;
                 }
                 const alertLevel = judgeAlertLevel(response.risk_score);
-                //TODO: 분석 결과 히스토리에 저장
+                saveAnalyzeHistory({
+                  sender: notification.title,
+                  content: notification.text,
+                  riskScore: response.risk_score,
+                  reason: response.reason,
+                  packageName: notification.packageName,
+                  alertLevel: alertLevel,
+                  dismissed: false,
+                }).catch((error) => {
+                  console.error(
+                    "[Notification Analysis] Failed to save history:",
+                    error,
+                  );
+                });
 
                 if (alertLevel === AlertLevel.SAFE) {
                   showLocalNotification("⚠️의심 문자입니다", "");
