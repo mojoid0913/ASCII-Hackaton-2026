@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { StyleSheet, View, ScrollView, TouchableOpacity } from "react-native";
+import { StyleSheet, ScrollView, TouchableOpacity } from "react-native";
 import { Button, Checkbox } from "react-native-paper";
 import { router } from "expo-router";
 import Slider from "@react-native-community/slider";
@@ -81,7 +81,7 @@ export default function OnboardingScreen() {
     switch (currentStep) {
       case 0:
         return (
-          <View style={styles.stepContainer}>
+          <ThemedView style={styles.stepContainer}>
             <ThemedText type="title" style={styles.title}>
               글씨 크기
             </ThemedText>
@@ -90,19 +90,19 @@ export default function OnboardingScreen() {
             </ThemedText>
 
             {/* 예시 텍스트 */}
-            <View style={styles.fontPreviewBox}>
+            <ThemedView style={styles.fontPreviewBox}>
               <ThemedText style={[styles.fontPreview, { fontSize }]}>
                 가나다라
               </ThemedText>
               {/* <ThemedText style={styles.fontSizeLabel}>
                 {fontSize}pt
               </ThemedText> */}
-            </View>
+            </ThemedView>
 
             {/* 슬라이더 */}
-            <View style={styles.sliderContainer}>
+            <ThemedView style={styles.sliderContainer}>
               <ThemedText style={styles.sliderLabel}>작게</ThemedText>
-              <View style={styles.sliderWrapper}>
+              <ThemedView style={styles.sliderWrapper}>
                 <Slider
                   minimumValue={14}
                   maximumValue={34}
@@ -114,15 +114,15 @@ export default function OnboardingScreen() {
                   thumbTintColor="#6200ee"
                   style={{ flex: 1 }}
                 />
-              </View>
+              </ThemedView>
               <ThemedText style={styles.sliderLabel}>크게</ThemedText>
-            </View>
-          </View>
+            </ThemedView>
+          </ThemedView>
         );
 
       case 1:
         return (
-          <View style={styles.stepContainer}>
+          <ThemedView style={styles.stepContainer}>
             <ThemedText type="title" style={styles.title}>
               보호자 설정
             </ThemedText>
@@ -159,14 +159,14 @@ export default function OnboardingScreen() {
                         color="#6200ee"
                         uncheckedColor="#666"
                       />
-                      <View style={styles.contactInfo}>
+                      <ThemedView style={styles.contactInfo}>
                         <ThemedText style={styles.contactName}>
                           {contact.name}
                         </ThemedText>
                         <ThemedText style={styles.contactPhone}>
                           {contact.phoneNumber}
                         </ThemedText>
-                      </View>
+                      </ThemedView>
                     </TouchableOpacity>
                   ))}
                 </ScrollView>
@@ -182,18 +182,18 @@ export default function OnboardingScreen() {
                 </ThemedText>
               </>
             ) : (
-              <View style={styles.emptyContainer}>
+              <ThemedView style={styles.emptyContainer}>
                 <ThemedText style={styles.emptyMessage}>
                   연락처를 가져와야 해요
                 </ThemedText>
-              </View>
+              </ThemedView>
             )}
-          </View>
+          </ThemedView>
         );
 
       case 2:
         return (
-          <View style={styles.stepContainer}>
+          <ThemedView style={styles.stepContainer}>
             <ThemedText type="title" style={styles.title}>
               개인정보 보호
             </ThemedText>
@@ -214,11 +214,11 @@ export default function OnboardingScreen() {
             {/* 개인정보 처리방침 내용 */}
             {privacyExpanded && (
               <ScrollView style={styles.privacyTextContainer}>
-                <View style={styles.privacyBox}>
+                <ThemedView style={styles.privacyBox}>
                   <ThemedText style={styles.privacyText}>
                     {PRIVACY_DESCRIPTIONS.content}
                   </ThemedText>
-                </View>
+                </ThemedView>
               </ScrollView>
             )}
 
@@ -235,7 +235,7 @@ export default function OnboardingScreen() {
                 개인정보 처리방침에 동의합니다
               </ThemedText>
             </TouchableOpacity>
-          </View>
+          </ThemedView>
         );
 
       default:
@@ -258,10 +258,10 @@ export default function OnboardingScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <View style={styles.content}>{renderStepContent()}</View>
+      <ThemedView style={styles.content}>{renderStepContent()}</ThemedView>
 
       {/* 페이지 인디케이터 */}
-      <View style={styles.indicatorContainer}>
+      <ThemedView style={styles.indicatorContainer}>
         {Array.from({ length: TOTAL_STEPS }).map((_, index) => (
           <TouchableOpacity
             key={index}
@@ -278,10 +278,10 @@ export default function OnboardingScreen() {
             disabled={index > currentStep}
           />
         ))}
-      </View>
+      </ThemedView>
 
       {/* 다음으로 버튼 */}
-      <View style={styles.buttonContainer}>
+      <ThemedView style={styles.buttonContainer}>
         <Button
           mode="contained"
           onPress={handleNext}
@@ -293,7 +293,7 @@ export default function OnboardingScreen() {
         >
           {currentStep < TOTAL_STEPS - 1 ? "다음으로" : "계속하기"}
         </Button>
-      </View>
+      </ThemedView>
     </ThemedView>
   );
 }
@@ -384,7 +384,6 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     marginBottom: 0.5,
     marginTop: 10,
-    color: "#333",
   },
   contactPhone: {
     fontSize: 13,
@@ -412,7 +411,7 @@ const styles = StyleSheet.create({
   },
   emptyMessage: {
     fontSize: 16,
-    color: "#999",
+    opacity: 0.6,
     fontWeight: "500",
   },
 
@@ -426,7 +425,6 @@ const styles = StyleSheet.create({
   privacyButtonText: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#333",
   },
   privacyTextContainer: {
     maxHeight: 200,
