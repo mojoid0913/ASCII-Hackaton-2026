@@ -80,7 +80,7 @@ def run_selenium_check(url_or_phone: str):
 @app.post("/analyze")
 async def analyze(req: SmsRequest):
     print(f"📡 Gemini 요청: {req.content[:20]}...") 
-
+    answer_str="분석 중 오류발생"
 
     # 1. 정규표현식으로 전화번호 여부 확인 (010-1234-5678 또는 02-123-4567 등)
     # 숫자와 하이픈만 포함된 전형적인 번호 패턴
@@ -98,24 +98,27 @@ async def analyze(req: SmsRequest):
         print("crawling result:"+str(crawler_result))
     else:
         print(f"ℹ️ 발신자가 이름({req.sender})이므로 크롤링을 건너뜁니다.")
+    if int(crawler_result)!=0:
+        score=100
+        answer_str="경찰 기록에서 신고이력이 발견되었습니다."
+    else:
+         # [수정됨] 1. RAG 검색 수행 (여기서 DB 뒤져서 비슷한거 가져옴)
+        context_text = "유사 사례 없음"
+        try:
+            print(req.content)
+            docs = vector_db.similarity_search(req.content, k=3)
+            if not docs:
+                print("⚠️ RAG 검색 결과가 0건입니다. (DB 확인 필요)")
+            else:
+                context_text = "\n".join([f"- {doc.page_content}" for doc in docs])
+                print(f"🔍 RAG 검색 성공! {len(docs)}개의 유사 사례를 참고합니다.")
+                # 어떤 내용을 찾았는지 첫 줄만 살짝 출력해보기
+                print(f"   ㄴ 첫 번째 사례 요약: {docs[0].page_content[:30]}...")
+        except Exception as e:
+            print(f"⚠️ RAG 검색 실패 (무시하고 진행): {e}")
 
-    # [수정됨] 1. RAG 검색 수행 (여기서 DB 뒤져서 비슷한거 가져옴)
-    context_text = "유사 사례 없음"
-    try:
-        print(req.content)
-        docs = vector_db.similarity_search(req.content, k=3)
-        if not docs:
-            print("⚠️ RAG 검색 결과가 0건입니다. (DB 확인 필요)")
-        else:
-            context_text = "\n".join([f"- {doc.page_content}" for doc in docs])
-            print(f"🔍 RAG 검색 성공! {len(docs)}개의 유사 사례를 참고합니다.")
-            # 어떤 내용을 찾았는지 첫 줄만 살짝 출력해보기
-            print(f"   ㄴ 첫 번째 사례 요약: {docs[0].page_content[:30]}...")
-    except Exception as e:
-        print(f"⚠️ RAG 검색 실패 (무시하고 진행): {e}")
-
-    # [수정됨] 2. 프롬프트에 검색 결과(context_text) 포함
-    prompt = f"""[System Prompt]
+        # [수정됨] 2. 프롬프트에 검색 결과(context_text) 포함
+        prompt = f"""[System Prompt]
 당신은 디지털 취약계층(고령층, 장애인 등)을 위한 보안 도우미입니다.
 사용자가 입력한 문자를 분석하여 위험 여부를 판단하고, 다음 원칙에 따라 답변하세요.
 
@@ -130,28 +133,27 @@ async def analyze(req: SmsRequest):
     다음 형식으로만 답변하세요: 위험도점수(0~100)|친절한설명
     예시: 90|위험해요! 절대 누르지 마세요.
 
-    [Message] '{req.content}'"""
+        [Message] '{req.content}'"""
     
-    score = 0
-    answer_str = "분석 중 오류 발생"
+        score = 0
 
-    try:
-        #response = model.generate_content(prompt)
-        text_data = response.text.strip()
-        print(f"🤖 Gemini 응답: {text_data}") 
+        try:
+            #response = model.generate_content(prompt)
+            text_data = response.text.strip()
+            print(f"🤖 Gemini 응답: {text_data}") 
         
-        if "|" in text_data:
-            parts = text_data.split("|")
-            score = int(''.join(filter(str.isdigit, parts[0])))
-            answer_str = parts[1].strip()
-        else:
-            score = 50
-            answer_str = text_data
+            if "|" in text_data:
+                parts = text_data.split("|")
+                score = int(''.join(filter(str.isdigit, parts[0])))
+                answer_str = parts[1].strip()
+            else:
+                score = 50
+                answer_str = text_data
 
-    except Exception as e:
-        print(f"❌ 에러: {e}")
-        score = 50
-        answer_str = "잠시 후 다시 시도해주세요."
+        except Exception as e:
+            print(f"❌ 에러: {e}")
+            score = 50
+            answer_str = "잠시 후 다시 시도해주세요."
 
     # DB 저장
     db = SessionLocal()

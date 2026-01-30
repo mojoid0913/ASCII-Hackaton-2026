@@ -55,8 +55,9 @@ def inspect_url(phone_number):
         val=driver.find_element(By.ID,"search-sms-cnt").text
 
         try:
+            print("craled value:"+val)
             if((int)(val)!=0):
-                result=1
+                result=(int)(val)
         except:
             result=0
         
