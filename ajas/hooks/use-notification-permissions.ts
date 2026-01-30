@@ -3,6 +3,7 @@ import NotificationsModule from "@/modules/notifications/src/NotificationsModule
 import analyzeMessage from "@/api/analyzeMessage";
 import { TARGET_PACKAGE_NAMES } from "@/constants/targetPackage";
 import { showLocalNotification } from "./use-expo-notifications";
+import { AlertLevel, judgeAlertLevel } from "@/util/alertLevel";
 
 export function useNotificationPermissions() {
   const [isReady, setIsReady] = useState(false);
@@ -60,19 +61,30 @@ export function useNotificationPermissions() {
                 return;
               }
             }
-            showLocalNotification("⚠️의심 문자입니다", "");
-            // analyzeMessage({
-            //   sender: notification.title,
-            //   content: notification.text,
-            // })
-            //   .then((response) => {
-            //     console.log("[Notification Analysis] Response:", response);
-            //     //TODO: 분석 결과 히스토리에 저장
-            //     showLocalNotification("⚠️의심 문자입니다", "");
-            //   })
-            //   .catch((error) => {
-            //     console.error("[Notification Analysis] Error:", error);
-            //   });
+
+            analyzeMessage({
+              sender: notification.title,
+              content: notification.text,
+            })
+              .then((response) => {
+                console.log("[Notification Analysis] Response:", response);
+                if (!response.isSuccessful) {
+                  console.error(
+                    "[Notification Analysis] Failed to analyze message:",
+                    response.message,
+                  );
+                  return;
+                }
+                const alertLevel = judgeAlertLevel(response.risk_score);
+                //TODO: 분석 결과 히스토리에 저장
+
+                if (alertLevel === AlertLevel.SAFE) {
+                  showLocalNotification("⚠️의심 문자입니다", "");
+                }
+              })
+              .catch((error) => {
+                console.error("[Notification Analysis] Error:", error);
+              });
           },
         );
 
