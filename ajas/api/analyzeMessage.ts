@@ -41,3 +41,5 @@ export default async function analyzeMessage(data: AnalyzeMessageRequest) {
     ...(await response.json()),
   } as AnalyzeMessageResponse;
 }
+
+export type { AnalyzeMessageRequest, AnalyzeMessageResponse };

@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import NotificationsModule from "@/modules/notifications/src/NotificationsModule";
-import analyzeMessage from "@/api/analyzeMessage";
 import { TARGET_PACKAGE_NAMES } from "@/constants/targetPackage";
 import { showLocalNotification } from "./use-expo-notifications";
 import { AlertLevel, judgeAlertLevel } from "@/util/alertLevel";
 import { saveAnalyzeHistory } from "@/util/analyzeHistoryStorage";
+import { ENV } from "@/constants/env";
 
 export function useNotificationPermissions() {
   const [isReady, setIsReady] = useState(false);
@@ -44,6 +44,11 @@ export function useNotificationPermissions() {
         console.log(
           "[useNotificationPermissions] Starting notification listener...",
         );
+
+        // Native 모듈에 API 엔드포인트와 타겟 패키지 설정
+        NotificationsModule.setApiEndpoint(ENV.API_ENDPOINT);
+        NotificationsModule.setTargetPackageNames(TARGET_PACKAGE_NAMES);
+
         const started = NotificationsModule.startListening();
         console.log("[useNotificationPermissions] Listener started:", started);
 
@@ -63,42 +68,40 @@ export function useNotificationPermissions() {
               }
             }
 
-            analyzeMessage({
+            // Native에서 분석된 결과 사용
+            const analyzed = notification.analyzed;
+            if (!analyzed) {
+              console.log("[Notification Analysis] No analysis data available");
+              return;
+            }
+
+            if (!analyzed.isSuccessful) {
+              console.error(
+                "[Notification Analysis] Failed to analyze message:",
+                analyzed.message,
+              );
+              return;
+            }
+
+            const alertLevel = judgeAlertLevel(analyzed.risk_score);
+            saveAnalyzeHistory({
               sender: notification.title,
               content: notification.text,
-            })
-              .then((response) => {
-                console.log("[Notification Analysis] Response:", response);
-                if (!response.isSuccessful) {
-                  console.error(
-                    "[Notification Analysis] Failed to analyze message:",
-                    response.message,
-                  );
-                  return;
-                }
-                const alertLevel = judgeAlertLevel(response.risk_score);
-                saveAnalyzeHistory({
-                  sender: notification.title,
-                  content: notification.text,
-                  riskScore: response.risk_score,
-                  reason: response.reason,
-                  packageName: notification.packageName,
-                  alertLevel: alertLevel,
-                  dismissed: false,
-                }).catch((error) => {
-                  console.error(
-                    "[Notification Analysis] Failed to save history:",
-                    error,
-                  );
-                });
+              riskScore: analyzed.risk_score,
+              reason: analyzed.reason,
+              packageName: notification.packageName,
+              alertLevel: alertLevel,
+              dismissed: false,
+            }).catch((error) => {
+              console.error(
+                "[Notification Analysis] Failed to save history:",
+                error,
+              );
+            });
 
-                if (alertLevel !== AlertLevel.SAFE) {
-                  showLocalNotification("⚠️의심 문자입니다", "");
-                }
-              })
-              .catch((error) => {
-                console.error("[Notification Analysis] Error:", error);
-              });
+            if (alertLevel !== AlertLevel.SAFE) {
+              showLocalNotification("⚠️의심 문자입니다", "");
+            }
           },
         );
 
