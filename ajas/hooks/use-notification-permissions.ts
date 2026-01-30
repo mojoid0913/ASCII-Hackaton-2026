@@ -38,16 +38,16 @@ export async function initNotificationListener(): Promise<void> {
     throw new Error("Notification listener permission denied");
   }
 
-  // 이미 리스너가 연결되어 있으면 중복 실행 방지
-  if (
-    typeof NotificationsModule.isListenerConnected === "function" &&
-    NotificationsModule.isListenerConnected()
-  ) {
-    console.log(
-      "[initNotificationListener] Listener already connected, skipping setup.",
-    );
-    return;
-  }
+  // // 이미 리스너가 연결되어 있으면 중복 실행 방지
+  // if (
+  //   typeof NotificationsModule.isListenerConnected === "function" &&
+  //   NotificationsModule.isListenerConnected()
+  // ) {
+  //   console.log(
+  //     "[initNotificationListener] Listener already connected, skipping setup.",
+  //   );
+  //   return;
+  // }
 
   // 리스너 시작
   console.log("[initNotificationListener] Starting notification listener...");
