@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+sqlalchemy
+pymysql
+selenium
+webdriver-manager
+google-generativeai
+python-multipart
+requests
