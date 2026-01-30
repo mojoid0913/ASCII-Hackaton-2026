@@ -8,23 +8,27 @@ from google.generativeai.types import HarmCategory, HarmBlockThreshold
 import os
 import datetime
 import json
-from crawler import inspect_url
+# from crawler import inspect_url # 필요시 주석 해제
 import re
 from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_chroma import Chroma # 👈 (추가) 이거 없으면 Chroma 에러남
 
-# 1. 임베딩 모델 준비 (DB 만들 때 쓴 거랑 똑같은 놈이어야 함!)
+# 1. 임베딩 모델 준비
 print("📂 벡터 DB 로딩 중...")
 embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
 
 # 2. 벡터 DB 연결
 vector_db = Chroma(
-    persist_directory="/home/mojoid0913/chroma_db",  # 아까 만든 그 폴더
+    persist_directory="/home/mojoid0913/chroma_db", 
     embedding_function=embeddings
 )
 
-
 # --- 설정 ---
 DB_URL = os.getenv("DB_URL")
+# DB URL 없으면 로컬 테스트용 (안전장치)
+if not DB_URL:
+    DB_URL = "sqlite:///./test.db"
+    
 engine = create_engine(DB_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
@@ -39,8 +43,8 @@ safety_settings = {
     HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
 }
 
-# 모델 설정
-model = genai.GenerativeModel('gemini-3-flash-preview', temperature=0.1,safety_settings=safety_settings)
+# 모델 설정 (사용자가 지정한 gemini-3 유지)
+model = genai.GenerativeModel('gemini-3-flash-preview', temperature=0.1, safety_settings=safety_settings)
 
 app = FastAPI()
 
@@ -66,10 +70,27 @@ def run_selenium_check(url_or_phone: str):
 
 @app.post("/analyze")
 async def analyze(req: SmsRequest):
-    # 프롬프트 설정
-        prompt = f"""[System Prompt]
+    print(f"📡 Gemini 요청: {req.content[:20]}...") 
+
+    # [수정됨] 1. RAG 검색 수행 (여기서 DB 뒤져서 비슷한거 가져옴)
+    context_text = "유사 사례 없음"
+    try:
+        # 유사도 기반 상위 3개 검색
+        docs = vector_db.similarity_search(req.content, k=3)
+        if docs:
+            # 검색된 내용을 문자열로 합침
+            context_text = "\n".join([f"- {doc.page_content}" for doc in docs])
+            print(f"🔍 RAG 검색 성공: {len(docs)}건 발견")
+    except Exception as e:
+        print(f"⚠️ RAG 검색 실패 (무시하고 진행): {e}")
+
+    # [수정됨] 2. 프롬프트에 검색 결과(context_text) 포함
+    prompt = f"""[System Prompt]
 당신은 디지털 취약계층(고령층, 장애인 등)을 위한 보안 도우미입니다.
 사용자가 입력한 문자를 분석하여 위험 여부를 판단하고, 다음 원칙에 따라 답변하세요.
+
+[참고할 과거 스미싱 사기 데이터]
+{context_text}
 
 쉬운 우리말 사용: 'URL', '피싱', '계정' 같은 IT 용어를 쓰지 마세요. 대신 '인터넷 주소', '사기', '내 정보' 등으로 풀어서 설명하세요.
 결론부터 말하기: 첫 문장은 무조건 "위험해요!" 혹은 "안전해요."로 시작하세요.
@@ -81,8 +102,6 @@ async def analyze(req: SmsRequest):
 
     [Message] '{req.content}'"""
     
-    print(f"📡 Gemini 요청: {req.content[:20]}...") 
-
     score = 0
     answer_str = "분석 중 오류 발생"
 
