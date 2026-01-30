@@ -8,6 +8,7 @@ import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import "react-native-reanimated";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import NotificationListener from "@/components/NotificationListener";
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -17,6 +18,7 @@ export default function RootLayout() {
       <PaperProvider
         theme={colorScheme === "dark" ? MD3DarkTheme : MD3LightTheme}
       >
+        <NotificationListener />
         <Stack>
           <Stack.Screen name="index" options={{ headerShown: false }} />
           <Stack.Screen
