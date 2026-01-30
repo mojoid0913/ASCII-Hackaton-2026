@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import * as SplashScreen from "expo-splash-screen";
 import NotificationsModule from "@/modules/notifications/src/NotificationsModule";
 import analyzeMessage from "@/api/analyzeMessage";
+import { TARGET_PACKAGE_NAMES } from "@/constants/targetPackage";
 
 export function useNotificationPermissions() {
   const [isReady, setIsReady] = useState(false);
@@ -48,6 +49,18 @@ export function useNotificationPermissions() {
         const subscription = NotificationsModule.addListener(
           "onNotificationPosted",
           (notification) => {
+            if (!TARGET_PACKAGE_NAMES.includes(notification.packageName)) {
+              return;
+            }
+
+            // 카카오톡의 경우 key의 4번째 자리가 null이면 무시
+            if (notification.packageName === "com.kakao.talk") {
+              const keyParts = notification.key?.split("|");
+              if (keyParts && keyParts[3] === "null") {
+                return;
+              }
+            }
+
             analyzeMessage({
               sender: notification.title,
               content: notification.text,
