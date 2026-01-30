@@ -2,7 +2,7 @@ import { StyleSheet, Image, View, ScrollView } from "react-native";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import * as SMS from 'expo-sms';
 import { getSettings } from "@/util/Storage";
-import { useMemo } from "react";
+import { useMemo, useCallback, useState } from "react";
 import { Surface, FAB } from "react-native-paper";
 import { Ionicons } from "@expo/vector-icons";
 import { ThemedView } from "@/components/themed-view";
@@ -14,8 +14,17 @@ import {
 import { dismissAnalyzeHistory } from "@/util/dismissAnalyzeHistory";
 import { AlertLevel } from "@/util/alertLevel";
 import { TARGET_PACKAGE_NAMES_HUMAN_READABLE } from "@/constants/targetPackage";
+import { useFocusEffect } from "expo-router"; // 📍 추가
 
 export default function HomeScreen() {
+  const [fontSize, setFontSize] = useState(20);
+  useFocusEffect(
+    useCallback(() => {
+      getSettings().then(s => {
+        if (s?.fontSize) setFontSize(s.fontSize);
+      });
+    }, [])
+  );
   const queryClient = useQueryClient();
   const { data, isLoading, isError } = useQuery({
     queryKey: ["analyzeHistory"],
@@ -38,13 +47,15 @@ export default function HomeScreen() {
         <View style={styles.centerContent}>
           <Image
             source={require("@/assets/images/icon.png")}
+            height={450}
+            width={450}
             style={styles.icon}
             resizeMode="contain"
           />
-          <ThemedText type="title" style={styles.mainText}>
+          <ThemedText style={[styles.mainText, { fontSize: fontSize * 1.2, lineHeight: fontSize * 1.8, textAlign: "center" }]}>
             지금 보호 중입니다
           </ThemedText>
-          <ThemedText style={styles.subText}>
+          <ThemedText style={[styles.subText, { fontSize: fontSize * 0.9, lineHeight: fontSize, textAlign: "center" }]}>
             문자 메세지를 실시간으로 감시하고 있어요
           </ThemedText>
         </View>
@@ -186,8 +197,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   icon: {
-    width: 120,
-    height: 120,
+    width: 200,
+    height: 200,
     marginBottom: 32,
   },
   mainText: {
@@ -199,6 +210,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#666",
     opacity: 0.7,
+    marginBottom: 0,
   },
   scrollView: {
     flex: 1,
@@ -247,10 +259,10 @@ const styles = StyleSheet.create({
   },
   fabLeft: {
     flex: 1,
-    backgroundColor: "#6200EE",
+    backgroundColor: "#5DB075",
   },
   fabRight: {
     flex: 1,
-    backgroundColor: "#E0E0E0",
+    backgroundColor: "#e8f5e6",
   },
 });
