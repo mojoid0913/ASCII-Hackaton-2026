@@ -67,6 +67,8 @@ export function useNotificationPermissions() {
             })
               .then((response) => {
                 console.log("[Notification Analysis] Response:", response);
+                //TODO: 분석 결과 히스토리에 저장
+                //TODO: 위험 알림 발송
               })
               .catch((error) => {
                 console.error("[Notification Analysis] Error:", error);
