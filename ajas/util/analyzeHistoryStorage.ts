@@ -1,5 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { AlertLevel } from "@/util/alertLevel";
+import { queryClient } from "@/global/queryClient";
 
 const HISTORY_VERSION_KEY = "analyzeHistory:version";
 const HISTORY_INDEX_KEY = "analyzeHistory:index";
@@ -88,6 +89,8 @@ export async function saveAnalyzeHistory(
   options: SaveAnalyzeHistoryOptions = {},
 ): Promise<AnalyzeHistoryItem> {
   await initializeAnalyzeHistoryStorage();
+
+  queryClient.invalidateQueries({ queryKey: ["analyzeHistory"] });
 
   const item: AnalyzeHistoryItem = {
     id: createId(),
