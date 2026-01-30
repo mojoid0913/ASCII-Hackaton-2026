@@ -12,7 +12,7 @@ import time
 DB_URL = "mysql+pymysql://root:rootpassword@localhost:3306/smishing_db"
 # 실제 Docker 서비스명 사용시: "mysql+pymysql://root:rootpassword@db:3306/smishing_db"
 
-os.environ["GOOGLE_API_KEY"] = "니_API_KEY_여기에"  # 혹은 환경변수 로드
+os.environ["GOOGLE_API_KEY"] = "AIzaSyDXAqnb6826hQNaYYOKdp6NScOjPV1BD2Q"  # 혹은 환경변수 로드
 
 def sync_mariadb_to_chroma():
     print("🔌 MariaDB 연결 중...")
@@ -20,7 +20,12 @@ def sync_mariadb_to_chroma():
     
     # 2. MariaDB에서 데이터 읽기 (전체 로드)
     # 필요한 컬럼: content(내용), label(정답)
-    query = "SELECT id, content, label FROM sms_dataset"
+    query = """
+        SELECT id, content, label 
+        FROM sms_dataset 
+        WHERE label = 2 
+        LIMIT 1000
+    """
     df = pd.read_sql(query, engine)
     
     print(f"📥 데이터 로드 완료: 총 {len(df)}개 행")
@@ -46,11 +51,11 @@ def sync_mariadb_to_chroma():
     
     # 5. ChromaDB 저장 (배치 처리)
     # 19,000개를 한 번에 넣으면 API Rate Limit에 걸림 -> 100개씩 쪼개서 넣기
-    BATCH_SIZE = 100
+    BATCH_SIZE = 10
     PERSIST_PATH = "./chroma_db"
     
     print(f"🚀 벡터 DB 구축 시작 (저장소: {PERSIST_PATH})")
-    
+    time.sleep(2)
     # 기존 DB가 있다면 로드, 없으면 생성
     vector_db = Chroma(
         embedding_function=embeddings,

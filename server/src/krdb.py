@@ -7,11 +7,11 @@ dataset = load_dataset("meal-bbang/Korean_message", split="train")
 
 conn = pymysql.connect(
     host='127.0.0.1',
-    port='3306',
+    port=3306,
     user='root',
     password='rootpassword',
     database='smishing_db',
-    charset='utf8mb4'
+    charset='utf8mb4',
     cursorclass=pymysql.cursors.DictCursor
 )
 cur = conn.cursor()
