@@ -76,8 +76,9 @@ async def analyze(req: SmsRequest):
     context_text = "유사 사례 없음"
     try:
         # 유사도 기반 상위 3개 검색
-        docs = vector_db.similarity_search(req.content, k=3)
-        if docs:
+        if len(docs)==0:
+            printf("RAG로 도출된 결과가 없습니다")
+        elif docs:
             # 검색된 내용을 문자열로 합침
             context_text = "\n".join([f"- {doc.page_content}" for doc in docs])
             print(f"🔍 RAG 검색 성공: {len(docs)}건 발견")
