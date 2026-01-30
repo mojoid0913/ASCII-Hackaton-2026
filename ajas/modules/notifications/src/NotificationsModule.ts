@@ -6,6 +6,21 @@ import {
 } from "./Notifications.types";
 
 declare class NotificationsModule extends NativeModule<NotificationsModuleEvents> {
+  // Set the API endpoint for message analysis
+  setApiEndpoint(endpoint: string): boolean;
+
+  // Get the current API endpoint
+  getApiEndpoint(): string;
+
+  // Set target package names to analyze (e.g., ["com.kakao.talk", "com.samsung.android.messaging"])
+  setTargetPackageNames(packageNames: string[]): boolean;
+
+  // Get current target package names
+  getTargetPackageNames(): string[];
+
+  // Check if a package is in the target list
+  isTargetPackage(packageName: string): boolean;
+
   // Check if notification listener permission is granted
   isPermissionGranted(): boolean;
 

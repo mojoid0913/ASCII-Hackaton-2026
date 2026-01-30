@@ -1,3 +1,17 @@
+// Analyzed message response from the API
+export type AnalyzedData =
+  | {
+      isSuccessful: true;
+      risk_score: number;
+      reason: string;
+      message: string;
+    }
+  | {
+      isSuccessful: false;
+      code: string;
+      message: string;
+    };
+
 // Notification data received from the listener
 export type NotificationData = {
   id: string;
@@ -11,6 +25,7 @@ export type NotificationData = {
   category: string;
   isOngoing: boolean;
   isClearable: boolean;
+  analyzed: AnalyzedData | null;
 };
 
 // Events emitted by the Notifications module
